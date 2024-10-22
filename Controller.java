@@ -11,7 +11,13 @@ public class Controller {
         repo = new Repo();
     }
 
-    public void setupConnection(String address, String port){
+    public void requestNewConnection(String address, String port){
+        int maxTries = 5;
+        boolean connected = false;
 
+        while(!connected && maxTries-- > 0){
+            ConnectionManager connectionManager = new ConnectionManager();
+            connectionManager.connectToPeer(address, port);
+        }
     }
 }
