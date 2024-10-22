@@ -1,23 +1,27 @@
 public class Controller {
-    private ConnectionManager connectionManager;
+    private final ConnectionManager connectionManager;
     private DownloadManager downloadManager;
     private Repo repo;
     private UserInterface userInterface;
 
-    public Controller(UserInterface userInterface){
-        this.userInterface = userInterface;
-        connectionManager = new ConnectionManager();
+    public Controller(int id){
+        this.userInterface = new UserInterface(this);
+        connectionManager = new ConnectionManager(8080+id);
         downloadManager = new DownloadManager();
         repo = new Repo();
     }
 
-    public void requestNewConnection(String address, String port){
-        int maxTries = 5;
-        boolean connected = false;
+    /*--------------------------------------------- Connection Related -----------------------------------------------*/
 
-        while(!connected && maxTries-- > 0){
-            ConnectionManager connectionManager = new ConnectionManager();
-            connectionManager.connectToPeer(address, port);
-        }
+    public boolean requestNewConnection(String address, String port){
+        return connectionManager.requestConnection(address, port);
+    }
+
+
+
+
+    /*----------------------------------------------------- Main -----------------------------------------------------*/
+    public static void main(String[] args) {
+        Controller controller = new Controller(1);
     }
 }

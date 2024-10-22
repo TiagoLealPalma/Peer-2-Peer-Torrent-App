@@ -10,7 +10,7 @@ public class UserInterface extends JFrame {
     private String[] searchResults;
     private Controller controller;
 
-    public UserInterface() {
+    public UserInterface(Controller controller) {
         // Set up the frame
         setTitle("BitTorrent");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -58,7 +58,7 @@ public class UserInterface extends JFrame {
             }
         });
 
-        controller = new Controller(this);
+        this.controller = controller;
 
         setVisible(true);
     }
@@ -86,9 +86,10 @@ public class UserInterface extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.requestNewConnection(address.getText(), port.getText());
-                dialog.dispose();
-                //dialog.setVisible(false);
+                if(!controller.requestNewConnection(address.getText(), port.getText()))
+                    JOptionPane.showMessageDialog(null,"Não foi possivel estabelecer esta ligação");
+                else
+                    dialog.dispose();
             }
         });
 
@@ -103,10 +104,4 @@ public class UserInterface extends JFrame {
         dialog.setVisible(true);
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            UserInterface ui = new UserInterface();
-            ui.setVisible(true);
-        });
-    }
 }
