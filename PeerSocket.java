@@ -3,7 +3,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class ClientSocket extends Thread{
+public class PeerSocket extends Thread{
 
     private BufferedReader in;
     private PrintWriter out;
@@ -13,14 +13,14 @@ public class ClientSocket extends Thread{
     private final String addressPort;
     private volatile boolean running = true;
 
-    public ClientSocket(String address, String port) {
+    public PeerSocket(String address, String port) {
         this.address = address;
         this.port = port;
         this.addressPort = address+":"+port;
     }
 
     // To handle the sockets accepted by the server
-    public ClientSocket(Socket socket) {
+    public PeerSocket(Socket socket) {
         this.socket = socket;
         this.address = socket.getInetAddress().toString();
         this.port = String.valueOf(socket.getPort());
@@ -66,7 +66,7 @@ public class ClientSocket extends Thread{
         InetAddress add;
 
         try {
-            add = InetAddress.getByName(address);
+            add = InetAddress.getByName("localhost");
             int portNumber = Integer.parseInt(port);
             socket = new Socket(add, portNumber);
 

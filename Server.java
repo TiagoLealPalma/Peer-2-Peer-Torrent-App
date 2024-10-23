@@ -26,10 +26,10 @@ public class Server extends Thread{
             while (running) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    System.out.println("Client connected");
+                    System.out.println("Client " + clientSocket.getPort()+ " connected");
 
-                    ClientSocket client = new ClientSocket(clientSocket);
-                    connectionManager.addAndStartClientSocket(client);
+                    PeerSocket peer = new PeerSocket(clientSocket);
+                    connectionManager.addAndStartClientSocket(peer);
 
 
                 } catch (IOException e) {

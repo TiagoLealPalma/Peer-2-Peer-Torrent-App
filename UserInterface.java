@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class UserInterface extends JFrame {
     private JTextField searchField;
@@ -12,7 +14,7 @@ public class UserInterface extends JFrame {
 
     public UserInterface(Controller controller) {
         // Set up the frame
-        setTitle("BitTorrent");
+        setTitle("BitTorrent - PORT: " + controller.PORT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 400);
         setLayout(new BorderLayout());
@@ -54,7 +56,11 @@ public class UserInterface extends JFrame {
         connectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                openConnectPortWindow();
+                try {
+                    openConnectPortWindow();
+                } catch (UnknownHostException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
 
@@ -64,12 +70,12 @@ public class UserInterface extends JFrame {
     }
 
 
-    private void openConnectPortWindow(){
+    private void openConnectPortWindow() throws UnknownHostException {
         JDialog dialog = new JDialog(this, "Adicionar Nó", true);
         dialog.setSize(550, 60);
         dialog.setLayout(new GridLayout(1,6));
         dialog.add(new JLabel("Endereço:", JLabel.CENTER));
-        JTextField address = new JTextField();
+        JTextField address = new JTextField(InetAddress.getByName(null).getHostAddress());
         dialog.add(address);
         dialog.add(new JLabel("Porta:", JLabel.CENTER));
         JTextField port = new JTextField();
@@ -88,8 +94,10 @@ public class UserInterface extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if(!controller.requestNewConnection(address.getText(), port.getText()))
                     JOptionPane.showMessageDialog(null,"Não foi possivel estabelecer esta ligação");
-                else
+                else{
+                    JOptionPane.showMessageDialog(null,"Ligação estabelecida com sucesso.\n(" +address.getText()+":"+port.getText()+")");
                     dialog.dispose();
+                }
             }
         });
 
