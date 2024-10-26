@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 public class PeerSocket extends Thread{
 
@@ -11,20 +12,23 @@ public class PeerSocket extends Thread{
     private final String address;
     private final String port;
     private final String addressPort;
+    private final ConnectionManager connectionManager;
     private volatile boolean running = true;
 
-    public PeerSocket(String address, String port) {
+    public PeerSocket(ConnectionManager connectionManager, String address, String port) {
         this.address = address;
         this.port = port;
         this.addressPort = address+":"+port;
+        this.connectionManager = connectionManager;
     }
 
     // To handle the sockets accepted by the server
-    public PeerSocket(Socket socket) {
+    public PeerSocket(ConnectionManager connectionManager, Socket socket) {
         this.socket = socket;
         this.address = socket.getInetAddress().toString();
         this.port = String.valueOf(socket.getPort());
         this.addressPort = address + ":" + port;
+        this.connectionManager = connectionManager;
         setupStreams();
     }
 
@@ -97,13 +101,31 @@ public class PeerSocket extends Thread{
     }
 
 
-
+    // Tipos de GetRequests (SEARCH - Pede o envio conteudo no repo | Download - Envio de informação de download)
     private void handleGetRequest(String request) {
-        out.println("Handling client GET request");
+        System.out.println("port: " + port + "Handling client GET request");
+        if(request.startsWith("SEARCH")){
+            ArrayList<String> listToSend = connectionManager.getSearchContent();
+            String result = "";
+            for(String str : listToSend) {
+                result += str + ",";
+            }
+            sendMessage("POSTSEARCH" + result);
+        }
+
     }
 
+    // Tipos de PostRequests (SEARCH - Envia conteudo no repo | Download - Envio de informação de download)
     private void handlePostRequest(String request) {
-        out.println("Handling client POST request");
+        System.out.println("port: " + port + "Handling client POST request:" + request);
+        if(request.startsWith("SEARCH")){
+            handleNewSearchInfo(request.substring(6));
+        }
+    }
+
+    private void handleNewSearchInfo(String searchInfo) {
+        connectionManager.updateSearchList(searchInfo.split(","));
+
     }
 
     public boolean sendMessage(String message) {
@@ -131,5 +153,9 @@ public class PeerSocket extends Thread{
 
     public Socket getSocket() {
         return socket;
+    }
+
+    public String getPort(){
+        return port;
     }
 }

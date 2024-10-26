@@ -4,12 +4,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Objects;
 
 public class UserInterface extends JFrame {
     private JTextField searchField;
     private JList<String> resultList;
     private JButton searchButton, downloadButton, connectButton;
     private String[] searchResults;
+    private ArrayList<String> searchResult;
+    private ArrayList<String> filteredSearchResult;
     private Controller controller;
 
     public UserInterface(Controller controller) {
@@ -31,9 +36,9 @@ public class UserInterface extends JFrame {
         topPanel.add(searchButton); // Search button on the right
 
         // List for search results APAGAR AS SAMPLES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        searchResults = new String[]{"lazy-day-stylish-futuristic-chill-239827_um.mp3 <2>",
-                "soulful-piano-serenade-30s-244335_um.mp3 <1>"};
-        resultList = new JList<>(searchResults);
+        searchResult = new ArrayList<>();
+        filteredSearchResult = new ArrayList<>();
+        resultList = new JList<>(searchResult.toArray(new String[0]));
         JScrollPane scrollPane = new JScrollPane(resultList);
 
         // Right Panel Components
@@ -52,6 +57,14 @@ public class UserInterface extends JFrame {
         setLocationRelativeTo(null);
 
         // Actions
+
+        searchButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                filterSearchList(searchField.getText());
+            }
+        });
 
         connectButton.addActionListener(new ActionListener() {
             @Override
@@ -110,6 +123,55 @@ public class UserInterface extends JFrame {
         });
 
         dialog.setVisible(true);
+    }
+    // filter is applied client side, no need to request info based on a filter
+    public void filterSearchList(String wordBeingSearched){
+        filteredSearchResult.clear();
+        for (String title : searchResult){
+            if(title.toLowerCase().contains(wordBeingSearched.toLowerCase()))
+                filteredSearchResult.add(title);
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            resultList.setListData(filteredSearchResult.toArray(new String[0]));
+        });
+
+    }
+
+
+    public synchronized void cleanSearchList(){
+        searchResult.clear();
+    }
+
+    public synchronized void addContentToSearchList(String[] contentToAdd){
+        if(Objects.equals(contentToAdd[0], ""))return;
+        for (String str : contentToAdd){
+            boolean added = false;
+            if(searchResult.isEmpty())
+                searchResult.add(str + " (1)");
+            else {
+                Iterator<String> iterator = searchResult.iterator();
+                while(iterator.hasNext() && !added){
+                    String title = iterator.next();
+                    // Incrementar numero de repositorios com esta informação disponivel
+                    if (str.equals(title.substring(0, title.length()-4))) {
+                        String temp = title.substring(0, str.length())
+                                + " ("
+                                + (Integer.parseInt(title.substring(title.length() - 2, title.length() - 1)) + 1)
+                                + ")";
+                        searchResult.remove(title);
+                        searchResult.add(temp);
+                        added = true;
+                        break;
+                    }
+                }
+                if (!added)searchResult.add(str + " (1)");
+            }
+        }
+
+
+        filterSearchList(searchField.getText());
+
     }
 
 }

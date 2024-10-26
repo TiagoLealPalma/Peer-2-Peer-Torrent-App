@@ -8,14 +8,16 @@ import java.util.Scanner;
 public class ConnectionManager {
 
     private final int PORT;
+    private Controller controller;
     private BufferedReader in;
     private PrintWriter out;
     private Server server;
     private ArrayList<PeerSocket> peerSockets = new ArrayList(); // Saves the connection to peers
 
-    public ConnectionManager(int PORT) {
+    public ConnectionManager(Controller controller, int PORT) {
         this.PORT = PORT;
         System.out.println("Server started at port " + PORT);
+        this.controller = controller;
 
         startServing(); // Starts to listen to incoming requests
     }
@@ -43,22 +45,26 @@ public class ConnectionManager {
     public synchronized void addAndStartClientSocket(PeerSocket peerSocket){
         peerSocket.start();
         peerSockets.add(peerSocket);
+        peerSocket.sendMessage("GETSEARCH"); // Pedir Atualização da search list
+
     }
 
 
     /*--------------------------------------------------- Client -----------------------------------------------------*/
 
     // Requests a connection for a client socket and saves it in a PeerSocket object in the ArrayList
+    // Also retrieves the titles for the files from the peers whom have been connected to
     public synchronized boolean requestConnection(String address, String port) {
         int maxTries = 5;
         boolean connected = false;
 
         while (maxTries-- > 0) {
-            PeerSocket peer = new PeerSocket(address, port);
+            PeerSocket peer = new PeerSocket(this, address, port);
 
             if (peer.connectToPeer()){
                 peer.start();
                 peerSockets.add(peer);
+                peer.sendMessage("GETSEARCH");
                 return true;
             }
         }
@@ -75,4 +81,14 @@ public class ConnectionManager {
         return true;
     }
 
+    /*--------------------------------------------------- Channel -----------------------------------------------------*/
+
+    public void updateSearchList(String[] searchList){
+        controller.updateSearchList(searchList);
+    }
+
+
+    public ArrayList<String> getSearchContent() {
+        return controller.getSearchContent();
+    }
 }

@@ -28,7 +28,7 @@ public class Server extends Thread{
                     Socket clientSocket = serverSocket.accept();
                     System.out.println("Client " + clientSocket.getPort()+ " connected");
 
-                    PeerSocket peer = new PeerSocket(clientSocket);
+                    PeerSocket peer = new PeerSocket(connectionManager, clientSocket);
                     connectionManager.addAndStartClientSocket(peer);
 
 
