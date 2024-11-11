@@ -1,16 +1,12 @@
 package V2;
 
-import V1.ConnectionManager;
-import V2.MessageTypes.EndComms;
 import V2.MessageTypes.FileSearchResult;
 import V2.MessageTypes.NewConnectionRequest;
 import V2.MessageTypes.WordSearchRequest;
+import V2.Structs.FileMetadata;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.net.*;
 import java.util.List;
 
 public class OpenConnection extends Thread{
@@ -18,18 +14,19 @@ public class OpenConnection extends Thread{
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Socket socket;
-    private final int port; // Information related to the client
+    private final int homePort;
+    private final int correspondentPort; // Information related to the client
     private final String address;
     private final String addressPort;
     private final V2.ConnectionManager connectionManager;
-    private boolean clearToEndComms = false;
     private volatile boolean running = true;
 
     // To open new connections
-    public OpenConnection(V2.ConnectionManager connectionManager, int port) {
+    public OpenConnection(V2.ConnectionManager connectionManager, int correspondentPort) {
         this.address = "127.0.0.1";
-        this.port = port;
-        this.addressPort = address+":"+port;
+        this.correspondentPort = correspondentPort;
+        this.homePort = connectionManager.getPORT();
+        this.addressPort = address+":"+ this.correspondentPort;
         this.connectionManager = connectionManager;
     }
 
@@ -37,19 +34,23 @@ public class OpenConnection extends Thread{
     public OpenConnection(V2.ConnectionManager connectionManager, Socket socket) {
         this.address = "127.0.0.1";
         this.socket = socket;
-        this.port = socket.getPort();
-        this.addressPort = address + ":" + port;
+        this.correspondentPort = socket.getPort();
+        this.homePort = connectionManager.getPORT();
+        this.addressPort = address + ":" + correspondentPort;
         this.connectionManager = connectionManager;
         setupStreams();
     }
 
 
+    // Main loop
     @Override
     public void run() {
         try {
             sendNewConnectionRequest();
+            sendWordSearchRequest(true);
             while (running) {
                 try {
+
                     Object message = in.readObject();
 
                     if (message instanceof NewConnectionRequest){
@@ -61,17 +62,14 @@ public class OpenConnection extends Thread{
                     } else if (message instanceof FileSearchResult) {
                         FileSearchResult fileSearchResult = (FileSearchResult) message;
                         handleFileSearchResult(fileSearchResult);
-                    } else if (message instanceof EndComms) {
-                        clearToEndComms = true;
                     }
-
-                    if(clearToEndComms) stopRunning();
 
 
                 } catch (ClassNotFoundException e) {
-                    System.out.println("Message type not recognized: " + addressPort);
+                    System.out.println("(" + homePort + ") Message type not recognized: " + correspondentPort);
                 } catch (IOException e) {
-                    System.out.println("Error in reading message: " + addressPort);
+                    System.out.println("(" + homePort + ") Error in reading message: " + correspondentPort);
+                    e.printStackTrace();
                 }
             }
         } finally { // Assures all resources used are cleaned before stepping out of the method
@@ -79,21 +77,16 @@ public class OpenConnection extends Thread{
         }
     }
 
-
-
-
-
-
     /* ------------------------------------------- Manage Connection --------------------------------------------------- */
 
     public boolean connectToPeer() {
         try {
-            socket = new Socket(address, port);
+            socket = new Socket(address, correspondentPort);
             return setupStreams();
 
             // Handles all possible exceptions
         } catch (IOException e) {
-            System.out.println("Error occurred while connecting to the peer: " + addressPort);
+            System.out.println("(" + homePort + ") Error occurred while connecting to the peer: " + correspondentPort);
             return false;
         }
     }
@@ -104,27 +97,27 @@ public class OpenConnection extends Thread{
             out.flush();
             in = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
-            System.out.println("Failed to connect or set up streams: " + e.getMessage());
+            System.out.println("("+ homePort + ") Failed to connect or set up streams: " + e.getMessage());
             return false;
         }
         return true;
     }
 
     public void stopRunning(){
-        System.out.println("Stopping socket thread: Port " +addressPort);
+        System.out.println("("+ homePort + ") Stopping socket thread: " + addressPort);
         running = false;
-        interrupt();
         closeConnection();
+        connectionManager.removeConnection(correspondentPort);
     }
 
     public void closeConnection() {
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
-                System.out.println("Connection with" + addressPort + "closed");
+                System.out.println("(" + homePort + ") Connection with " + addressPort + " closed");
             }
         } catch (IOException e) {
-            System.out.println("Failed to close socket: " + e.getMessage());
+            System.out.println("(" + homePort + ") Failed to close socket: " + e.getMessage());
         }
     }
 
@@ -132,77 +125,59 @@ public class OpenConnection extends Thread{
     /* --------------------------------------------- Handle Messages ------------------------------------------------ */
 
     private void handleNewConnectionRequest(NewConnectionRequest newConnectionRequest) {
-        System.out.println("Recebido new connection request from port: " + port);
         connectionManager.addNewConceptualConnection(this);
     }
 
     private void handleWordSearchRequest(WordSearchRequest wordSearchRequest) {
-        String keyWord = wordSearchRequest.getKeyWord();
-        boolean uiUpdate = wordSearchRequest.isUIUpdate();
-        FileSearchResult result = new FileSearchResult(connectionManager.wordSearchResponse(keyWord), uiUpdate);
+        FileSearchResult result = new FileSearchResult(
+                                            connectionManager.wordSearchResponse(wordSearchRequest.getKeyWord())
+                                                                            , wordSearchRequest.isUIUpdate());
         sendFileSearchResult(result);
     }
 
     private void handleFileSearchResult(FileSearchResult fileSearchResult) {
-        List<String> result = fileSearchResult.getTitles();
+        List<FileMetadata> result = fileSearchResult.getList();
+
         if(result.isEmpty()) return;
         if(fileSearchResult.isUIUpdate()) {
-            connectionManager.updateUiList(fileSearchResult.getTitles());
-            sendClearToEndComms();
+            connectionManager.updateUiList(fileSearchResult.getList());
         }
     }
-
 
     /* ---------------------------------------------- Send Messages ------------------------------------------------- */
 
     public void sendNewConnectionRequest(){
         try {
-            out.writeObject(new NewConnectionRequest(port));
+            out.writeObject(new NewConnectionRequest(correspondentPort));
             out.flush();
         } catch (IOException e) {
-            System.out.println("Failed to send new connection request to port: " + port);
+            System.out.println("(" + homePort + ") Failed to send new connection request to correspondentPort: " + correspondentPort);
         }
     }
 
-    public void sendWordSearchRequest(String keyWord, boolean uiUpdate) {
+    // Sends Word Search Request based on the keyWord value on the connection manager
+    public void sendWordSearchRequest(boolean uiUpdate) {
         try {
-            out.writeObject(new WordSearchRequest(keyWord, uiUpdate));
+            System.out.println("(" + homePort + ") A enviar pedido de pesquisa por '" + connectionManager.getKeyWord() + "'");
+            out.writeObject(new WordSearchRequest(connectionManager.getKeyWord(), uiUpdate));
             out.flush();
-        } catch (IOException e) {System.out.println("Error occurred while sending word search request to port: " + port);}
+
+        } catch (IOException e) {System.out.println("(" + homePort + ") Error occurred while sending word search request to correspondentPort: " + correspondentPort);}
     }
 
+    // Sends the file result to whom ever asked
     public void sendFileSearchResult(FileSearchResult result) {
         try{
             out.writeObject(result);
             out.flush();
+
         }catch (IOException e) {
-            System.out.println("Error occurred while sending word search result to port: " + port);
+            System.out.println("(" + homePort + ") Error occurred while sending word search result to correspondentPort: " + correspondentPort);
         }
     }
 
-    public void sendClearToEndComms(){
-        try {
-            out.writeObject(new EndComms());
-        out.flush();
-        } catch (IOException e) {
-            System.out.println("Error occurred while sending end comms: " + port);
-        }
-    }
+    public Socket getSocket() { return socket; }
 
-
-
-
-
-
-
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public int getPort(){
-        return port;
-    }
-
-
+    public int getCorrespondentPort(){ return correspondentPort; }
 }
 

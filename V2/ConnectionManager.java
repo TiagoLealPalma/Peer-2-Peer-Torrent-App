@@ -1,19 +1,19 @@
 package V2;
 
-import V1.PeerSocket;
-import V1.Server;
+import V2.Structs.FileMetadata;
 
-import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConnectionManager {
 
     private final int PORT;
     private V2.Controller controller;
     private V2.Server server;
-    private ArrayList<Integer> conceptualConnections = new ArrayList(); // Saves the connection to peers
+    private String keyWord = "";
+    private Map<Integer, OpenConnection> openConnections = new HashMap();
 
     public ConnectionManager(Controller controller, int PORT) {
         this.PORT = PORT;
@@ -26,7 +26,7 @@ public class ConnectionManager {
     /*--------------------------------------------- General Management -----------------------------------------------*/
 
 
-    /*--------------------------------------------------- V1.Server -----------------------------------------------------*/
+    /*--------------------------------------------------- Server -----------------------------------------------------*/
     public void startServing(){
         server = new V2.Server(PORT, this);
         server.start();
@@ -42,9 +42,9 @@ public class ConnectionManager {
     }
 
     public synchronized void addNewConceptualConnection(OpenConnection connection){
-        if(!conceptualConnections.contains(connection.getPort())) {
-            conceptualConnections.add(connection.getPort());
-            connection.sendWordSearchRequest("", true); // Pedir Atualização da search list
+        if(!openConnections.values().contains(connection.getCorrespondentPort())) {
+            System.out.println("Recebido new connection request from port: " + connection.getCorrespondentPort());
+            openConnections.put(connection.getCorrespondentPort(), connection);
         }
 
     }
@@ -52,37 +52,60 @@ public class ConnectionManager {
 
     /*--------------------------------------------------- Client -----------------------------------------------------*/
 
-    // Requests a connection for a client socket and saves it in a V1.PeerSocket object in the ArrayList
-    // Also retrieves the titles for the files from the peers whom have been connected to
-    public synchronized boolean requestConnection(String address, String port) {
+    // Requests a connection for a client socket and saves it in the openConnections HashMap
+    public synchronized OpenConnection requestConnection(String address, int port) {
         int maxTries = 5;
         boolean connected = false;
 
         while (maxTries-- > 0) {
-            OpenConnection connection = new OpenConnection(this, Integer.parseInt(port));
+            OpenConnection connection = new OpenConnection(this, port);
 
             if (connection.connectToPeer()){
                 connection.start();
-                return true;
+                return connection;
             }
         }
-        return false;
+        return null;
     }
 
-    // Runs through the Arraylist to find the ClientSocket that takes care of the specific socket and sends message
-    public boolean sendMessage(int port, String message) {
-        for(Integer clientPorts : conceptualConnections){
+    public void addConnection(OpenConnection connection) {
+        openConnections.put(connection.getCorrespondentPort(), connection);
+    }
+
+    public synchronized void removeConnection(int port) {
+        if(openConnections.containsKey(port)) {
+            openConnections.remove(port);
         }
-        return true;
     }
 
-    /*--------------------------------------------------- Channel -----------------------------------------------------*/
+    /*-------------------------------------------------- Requests ----------------------------------------------------*/
 
-    public List<String> wordSearchResponse(String keyWord) {
+    public synchronized void floodWordSearchRequest(String keyWord) {
+        // Inundar todas as ligações abertas com Word Requests
+        for (OpenConnection connection : openConnections.values()) {
+            connection.sendWordSearchRequest( true);
+        }
+
+    }
+
+    /*--------------------------------------------------- Tunneling -----------------------------------------------------*/
+
+    public List<FileMetadata> wordSearchResponse(String keyWord) {
         return controller.wordSearchResponse(keyWord);
     }
 
-    public void updateUiList(List<String> titles) {
-        controller.updateUiList(titles);
+    public void updateUiList(List<FileMetadata> list) {
+        controller.updateUiList(list);
+    }
+
+    public synchronized void setKeyWord(String keyWord) {
+        this.keyWord = keyWord;
+    }
+
+    public synchronized String getKeyWord() {
+        return keyWord;
+    }
+    public int getPORT(){
+        return PORT;
     }
 }

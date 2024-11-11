@@ -1,5 +1,7 @@
 package V2;
 
+import V2.Structs.FileMetadata;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,8 +27,14 @@ public class Controller {
 
     /*--------------------------------------------- Connection Related -----------------------------------------------*/
 
-    public boolean requestNewConnection(String address, String port){
-        return connectionManager.requestConnection(address, port);
+    public boolean requestNewConnection(String address, int port, String keyWord){
+        connectionManager.setKeyWord(keyWord);
+        return connectionManager.requestConnection(address, port) != null;
+    }
+
+    public void filterSearchList(String keyWord){
+        connectionManager.setKeyWord(keyWord);
+        connectionManager.floodWordSearchRequest(keyWord);
     }
 
 
@@ -34,18 +42,18 @@ public class Controller {
 
     /*----------------------------------------------------- File -----------------------------------------------------*/
 
-    public List<String> wordSearchResponse(String keyWord) {
+    public List<FileMetadata> wordSearchResponse(String keyWord) {
         return repo.wordSearchResponse(keyWord);
     }
 
 
 
 
-    /*----------------------------------------------------- Main -----------------------------------------------------*/
+    /*------------------------------------------------------ UI ------------------------------------------------------*/
     // Peers são egoistas e só pedem informação para si, não fornecem informação aos outros, sem esta ser pedida
     // V1.PeerSocket ---> Connection Mannager ---> V1.Controller ---> V1.UserInterface
-    public void updateUiList(List<String> titles){
-        userInterface.addContentToSearchList(titles);
+    public void updateUiList(List<FileMetadata> list){
+        userInterface.addContentToSearchList(list);
     }
 
 

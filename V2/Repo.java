@@ -1,101 +1,108 @@
 package V2;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import V2.Structs.FileMetadata;
+
+import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Repo {
-    private File repo;
-    private PrintWriter writer;
-    private String[] content;
-    private static final int CHUNKSIZE = 256; // in KB
-    public class FileMetadata{
-        private String fileName;
-        private long fileSize;
-        private int totalChunks;
-
-        FileMetadata(String fileName, long fileSize, int totalChunks){
-            this.fileName = fileName;
-            this.fileSize = fileSize;
-            this.totalChunks = totalChunks;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-
-            FileMetadata that = (FileMetadata) obj;
-            return fileSize == this.fileSize &&
-                    totalChunks == this.totalChunks &&
-                    fileName.equals(this.fileName);
-        }
-
-        @Override
-        public String toString() {
-            return "FileMetadata{" +
-                    "fileName='" + fileName + '\'' +
-                    ", fileSize=" + fileSize +
-                    ", totalChunks=" + totalChunks +
-                    '}';
-        }
-
-        public String getFileName() {
-            return fileName;
-        }
-
-        public long getFileSize() {
-            return fileSize;
-        }
-
-        public int getTotalChunks() {
-            return totalChunks;
-        }
-    }
-
+    private File directory;
+    private MessageDigest digest;
+    private static final int CHUNKSIZE = 10240; // in KB
+    private List<FileMetadata> FileMetadataList = new ArrayList<FileMetadata>();
 
     public Repo(String repoName) {
-        repo = new File("./" + repoName);
+        directory = new File("./" + repoName);
+
+        // Corner cases
+        if(!directory.exists()){
+            directory.mkdir();
+            System.out.println("Foi criada um novo pasta para disponibilizar ficheiros: " + directory.getAbsolutePath());
+            return;
+        }
+        if(!directory.isDirectory()){
+            System.out.println("O caminho inserido não corresponde a uma directoria: " + directory.getAbsolutePath() +
+                    "\n Reinicie a aplicação e insira um caminho válido.");
+            return;
+        }
+
         try {
-            writer = new PrintWriter(repo);
-        } catch (FileNotFoundException e) {
-            System.out.println("File not found: " + repoName);
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) { throw new RuntimeException(e);}
+
+        File[] files = directory.listFiles();
+        for(final File file : files){
+            try {
+                digest.reset();
+                byte[] buffer = new byte[1024];
+                int bytesRead = 0;
+                FileInputStream fis = new FileInputStream(file);
+
+                while((bytesRead = fis.read(buffer)) != -1){
+                    digest.update(buffer, 0, bytesRead);
+                }
+                fis.close();
+                byte[] hash = digest.digest();
+                FileMetadataList.add(new FileMetadata(file.getName(), hash));
+
+            } catch (FileNotFoundException e) {
+                System.out.println("File was not found.");
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.out.println("Error occured while building repo.");
+                e.printStackTrace();
+            }
         }
     }
 
-    public ArrayList<String> wordSearchResponse(String keyWord) {
-        ArrayList<String> list = new ArrayList<>();
-        for (String title : repo.list()) {
-            if(title.toLowerCase().contains(keyWord.toLowerCase()))
-                list.add(title);
+    public void refreshRepo(){
+        FileMetadataList.clear();
+        File[] files = directory.listFiles();
+        for(final File file : files){
+            try {
+                digest.reset();
+                byte[] buffer = new byte[1024];
+                int bytesRead = 0;
+                FileInputStream fis = new FileInputStream(file);
+
+                while((bytesRead = fis.read(buffer)) != -1){
+                    digest.update(buffer, 0, bytesRead);
+                }
+                fis.close();
+                byte[] hash = digest.digest();
+                FileMetadataList.add(new FileMetadata(file.getName(), hash));
+
+            } catch (FileNotFoundException e) {
+                System.out.println("File was not found.");
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.out.println("Error occured while building repo.");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public ArrayList<FileMetadata> wordSearchResponse(String keyWord) {
+        ArrayList<FileMetadata> list = new ArrayList<>();
+        if(FileMetadataList.isEmpty()) return list; // In case directory is empty just return empty list
+
+        for (FileMetadata file : FileMetadataList) {
+            if(!file.getFileName().equalsIgnoreCase(".ds_store") && file.getFileName().toLowerCase().contains(keyWord.toLowerCase()))
+                list.add(file);
         }
         return list;
     }
 
-    public FileMetadata getFileMetadata(String filename){
-        File file = new File(repo, filename);
-        if(!file.exists() || !file.isFile() || !file.canRead()){
-            System.out.println("File not found or not valid: " + filename);
-            return null;
-        }
-
-        // Calculate total chunks
-        int totalChunks = (int)Math.ceil(file.length() / CHUNKSIZE);
-
-
-        return new FileMetadata(file.getName(), file.length(), totalChunks);
-    }
-
-
-
 
     public static void main(String[] args) {
-        V1.Repo repo = new V1.Repo("dll1");
-        ArrayList<String> searchContent = repo.getSearchContent();
+        V2.Repo repo = new V2.Repo("dll1");
+        ArrayList<FileMetadata> searchContent = repo.wordSearchResponse("");
 
-        System.out.println(repo.getFileMetadata(searchContent.get(0)));
+        System.out.println(searchContent.get(0).toString());
+        System.out.println(searchContent.get(0).getHash());
     }
 }
 

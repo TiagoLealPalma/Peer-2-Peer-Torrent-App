@@ -20,20 +20,20 @@ public class Server extends Thread{
     public void run() {
         try {
             serverSocket = new ServerSocket(port);
-            System.out.println("V1.Server listening on port " + port);
-        } catch (IOException e) {System.out.println("Error creating the server");}
+            System.out.println("(" + connectionManager.getPORT() + ")Server listening on port " + port);
+        } catch (IOException e) {System.out.println("(" + connectionManager.getPORT() + ")Error creating the server");}
         try {
             // Ears for new Connections
             while (running) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    System.out.println("Client " + clientSocket.getPort() + " connected");
+                    System.out.println("(" + connectionManager.getPORT() + ")Client " + clientSocket.getPort() + " connected");
 
                     connectionManager.createConnection(clientSocket);
 
 
                 } catch (IOException e) {
-                    System.out.println("Error accepting client connection");
+                    System.out.println("(" + connectionManager.getPORT() + ") Error accepting client connection");
                 }
             }
         }finally {

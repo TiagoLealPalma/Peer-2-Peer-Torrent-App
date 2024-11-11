@@ -1,17 +1,19 @@
 package V2.MessageTypes;
 
+import V2.Structs.FileMetadata;
+
 import java.util.List;
 
 public class FileSearchResult implements Message{
-    private final List<String> titles;
+    private final List<FileMetadata> list;
     private final boolean uiUpdate;
-    public FileSearchResult(List<String> titles, boolean uiUpdate) {
-        this.titles = titles;
+    public FileSearchResult(List<FileMetadata> list, boolean uiUpdate) {
+        this.list = list;
         this.uiUpdate = uiUpdate;
     }
 
-    public List<String> getTitles() {
-        return titles;
+    public List<FileMetadata> getList() {
+        return list;
     }
 
     public boolean isUIUpdate() {

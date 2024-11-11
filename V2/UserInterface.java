@@ -1,7 +1,6 @@
 package V2;
 
-
-import V1.Controller;
+import V2.Structs.FileMetadata;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +15,7 @@ public class UserInterface extends JFrame {
     private JTextField searchField;
     private JList<String> resultList;
     private JButton searchButton, downloadButton, connectButton;
-    private Map<String, Integer> titles;
+    private Map<FileMetadata, Integer> titles;
     private ArrayList<String> toDisplay;
     private V2.Controller controller;
 
@@ -65,7 +64,8 @@ public class UserInterface extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                //filterSearchList(searchField.getText());
+                titles.clear();
+                controller.filterSearchList(searchField.getText());
             }
         });
 
@@ -108,7 +108,20 @@ public class UserInterface extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!controller.requestNewConnection(address.getText(), port.getText()))
+                int parsedPort;
+                try{ parsedPort = Integer.parseInt(port.getText());} catch (NumberFormatException ex) {
+                    parsedPort = -1;
+                }
+                if(parsedPort == controller.PORT) {
+                    JOptionPane.showMessageDialog(null, "Se procura uma ligação consigo próprio, tente o psicolgo :)");
+                    return;
+                }
+                if(parsedPort < 8080 || parsedPort > 65535) {
+                    JOptionPane.showMessageDialog(null, "Use portos entre 8080 e 65535");
+                    return;
+                }
+
+                if (!controller.requestNewConnection(address.getText(), parsedPort, searchField.getText()) || parsedPort == -1)
                     JOptionPane.showMessageDialog(null, "Não foi possivel estabelecer esta ligação");
                 else {
                     JOptionPane.showMessageDialog(null, "Ligação estabelecida com sucesso.\n(" + address.getText() + ":" + port.getText() + ")");
@@ -128,17 +141,17 @@ public class UserInterface extends JFrame {
         dialog.setVisible(true);
     }
 
-    // filter is applied client side, no need to request info based on a filter
-    public void addContentToSearchList(List<String> list) {
+    // Filter is applied client side, no need to request info based on a filter
+    public void addContentToSearchList(List<FileMetadata> list) {
         // Merges the new list with the existing map
-        for (String newListTitle : list) {
-            titles.merge(newListTitle, 1, Integer::sum); // Checks for equal titles, increments if found
+        for (FileMetadata file : list) {
+           titles.merge(file, 1, Integer:: sum);
         }
 
-        // Prepare display content
+        // Prepare to display content
         toDisplay.clear();
-        for (Map.Entry<String, Integer> entry : titles.entrySet()) {
-            toDisplay.add(entry.getKey() + " <" + entry.getValue() + ">");
+        for (Map.Entry<FileMetadata, Integer> entry : titles.entrySet()) {
+            toDisplay.add(entry.getKey().getFileName() + " <" + entry.getValue() + ">");
         }
 
         SwingUtilities.invokeLater(() -> {
