@@ -106,11 +106,13 @@ public class Controller {
     public static void main(String[] args) {
         Controller controller = new Controller(0, "dll1");
         Controller controller2 = new Controller(1, "dll2");
-       // Controller controller3 = new Controller(2, "dll3");
+        Controller controller3 = new Controller(2, "dll3");
     }
 
 
     public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata) {
-        //boolean success = repo.writeFile(blocks, fileMetadata);
+        if(repo.writeFile(blocks, fileMetadata)){
+            userInterface.showDownloadInfo();
+        }
     }
 }

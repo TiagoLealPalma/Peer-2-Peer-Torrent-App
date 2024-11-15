@@ -107,8 +107,6 @@ public class Repo {
         if(index == -1) return null;
 
         File fileToDivide = directory.listFiles()[index];
-
-
         List<FileBlockResult> results = new ArrayList<>();
         try {
             FileInputStream fis = new FileInputStream(fileToDivide);
@@ -119,7 +117,9 @@ public class Repo {
         int blockIndex = 0;
 
         while((bytesRead = fis.read(buffer)) != -1){
-            results.add(new FileBlockResult(buffer, blockIndex));
+            byte[] blockData = new byte[bytesRead]; // Create a new array for the block
+            System.arraycopy(buffer, 0, blockData, 0, bytesRead); // Copy the data
+            results.add(new FileBlockResult(blockData, blockIndex));
             blockIndex++;
         }
 
@@ -134,17 +134,25 @@ public class Repo {
     }
 
     // Takes te priority queue and writes the file in the directory
-    public boolean writeFile(List<FileBlockResult> data, FileMetadata fileMetadata) {
+    public boolean writeFile(PriorityQueue<FileBlockResult> data, FileMetadata fileMetadata) {
         try {
-            // Make sure the file is written even if its a duplicate by adding, for exemple, (1) after
+            // Make sure the file is written even if it's a duplicate by adding, for exemple, (1) after
             String originalPath = directory.getAbsolutePath() + "/" + fileMetadata.getFileName();
+            File file = new File(originalPath);
             String path = originalPath;
-            File file = new File(path);
             int index = 1;
 
+            // Check if the file exists, and append "(1)", "(2)", etc., if it does
             while (file.exists()) {
-                path = originalPath + String.format(" (%d)", index);
-                file = new File(path); // Update the file reference with the new path
+                int dotIndex = originalPath.lastIndexOf('.');
+                if (dotIndex == -1) {
+                    // Just appends the number
+                    path = originalPath + " (" + index + ")";
+                } else {
+                    // Add the number before the extension
+                    path = originalPath.substring(0, dotIndex) + " (" + index + ")" + originalPath.substring(dotIndex);
+                }
+                file = new File(path);
                 index++;
             }
             FileOutputStream fos = new FileOutputStream(path);
@@ -161,11 +169,11 @@ public class Repo {
 
 
     public static void main(String[] args) {
-        Repo repo = new Repo("dll1");
+        Repo repo = new Repo("dll2");
         ArrayList<FileMetadata> searchContent = repo.wordSearchResponse("");
 
         FileMetadata f = searchContent.get(0);
-        repo.writeFile(repo.calculateFileBlocks(searchContent.get(0)),f);
+        //repo.writeFile(repo.calculateFileBlocks(searchContent.get(0)),f);
 
     }
 }

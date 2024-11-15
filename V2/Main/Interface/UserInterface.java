@@ -215,4 +215,8 @@ public class UserInterface extends JFrame {
             resultList.setListData(toDisplay.toArray(new String[0]));
         });
     }
+
+    public void showDownloadInfo() {
+        JOptionPane.showMessageDialog(null,"Download efeituado com sucesso :P");
+    }
 }

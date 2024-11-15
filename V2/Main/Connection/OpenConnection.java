@@ -101,11 +101,6 @@ public class OpenConnection extends Thread{
         }
     }
 
-
-
-
-
-
     /* ------------------------------------------- Manage Connection --------------------------------------------------- */
 
     public boolean connectToPeer() {
@@ -185,7 +180,10 @@ public class OpenConnection extends Thread{
 
 
     private void handleFileBlockRequest(FileBlockRequest fileBlockRequest) {
+        UploadProcess process = uploadProcesses.get(fileBlockRequest.getId());
+        if(process == null) return;
 
+        process.requestBlock(fileBlockRequest);
     }
 
 

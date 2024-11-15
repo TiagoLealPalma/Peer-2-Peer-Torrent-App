@@ -21,25 +21,29 @@ public class UploadProcess implements Runnable{
         this.PROCESS_ID = processID;
         this.manager = manager;
         this.connection = connection;
+        this.blocks = blocks;
     }
 
     @Override
     public void run() {
         while(running){
             while(indexBuffer.isEmpty()){
-                try {
-                    wait();
-                } catch (InterruptedException e) {System.out.println("Processo " + PROCESS_ID + " interrupted");}
+                synchronized (this){
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {System.out.println("Processo " + PROCESS_ID + " interrupted");}
+                }
             }
-            int indexToSend = indexBuffer.getFirst();
+            int indexToSend = indexBuffer.removeFirst();
             FileBlockResult blockToSend = blocks.get(indexToSend);
             blockToSend.setId(PROCESS_ID);
             connection.sendFileBlockResult(blockToSend);
         }
     }
 
-    public void requestBlock(FileBlockRequest request){
+    public synchronized void requestBlock(FileBlockRequest request){
         indexBuffer.add(request.getBlockIndex());
+        System.out.println(String.format("Bloco %d entregue", request.getBlockIndex()));
         notifyAll();
     }
 
