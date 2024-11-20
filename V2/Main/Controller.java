@@ -12,6 +12,7 @@ import V2.Main.FileSharing.UploadProcess;
 import V2.Main.Repository.Repo;
 import V2.Main.Interface.UserInterface;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -110,9 +111,10 @@ public class Controller {
     }
 
 
-    public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata) {
+    public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata,
+                                                    HashMap<Integer, Integer> blocksPerSeeder) {
         if(repo.writeFile(blocks, fileMetadata)){
-            userInterface.showDownloadInfo();
+            userInterface.showDownloadInfo(blocksPerSeeder);
         }
     }
 }

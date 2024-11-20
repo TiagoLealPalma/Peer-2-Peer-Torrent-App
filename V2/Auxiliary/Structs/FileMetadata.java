@@ -10,7 +10,7 @@ public class FileMetadata implements Serializable {
     public FileMetadata(String fileName, byte[] hash, int length){
         this.fileName = fileName;
         this.hash = hash;
-        this.length = length; // In bytes
+        this.length = length; // Em blocos
     }
 
     @Override

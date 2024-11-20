@@ -7,6 +7,7 @@ import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -50,7 +51,16 @@ public class Repo {
                 }
                 fis.close();
                 byte[] hash = digest.digest();
-                fileMetadataList.add(new FileMetadata(file.getName(), hash, numOfBlocks));
+
+                // Check for duplicates
+                boolean isAlreadyPresent = false;
+                for(FileMetadata fileMetadata : fileMetadataList){
+                    if(Arrays.equals(fileMetadata.getHash(), hash)){
+                        isAlreadyPresent = true;
+                    }
+                }
+                if(!isAlreadyPresent)
+                    fileMetadataList.add(new FileMetadata(file.getName(), hash, numOfBlocks));
 
             } catch (FileNotFoundException e) {
                 System.out.println("File was not found.");
@@ -103,9 +113,10 @@ public class Repo {
     }
 
     public List<FileBlockResult> calculateFileBlocks(FileMetadata file) {
-        int index = fileMetadataList.indexOf(file);
+        int index = fileMetadataList.indexOf(file); // Arranjar forma mais robusta
         if(index == -1) return null;
 
+        // Gets the file corresponding to the file parametized
         File fileToDivide = directory.listFiles()[index];
         List<FileBlockResult> results = new ArrayList<>();
         try {
@@ -133,7 +144,7 @@ public class Repo {
         return results;
     }
 
-    // Takes te priority queue and writes the file in the directory
+    // Takes the priority queue and writes the file in the directory
     public boolean writeFile(PriorityQueue<FileBlockResult> data, FileMetadata fileMetadata) {
         try {
             // Make sure the file is written even if it's a duplicate by adding, for exemple, (1) after

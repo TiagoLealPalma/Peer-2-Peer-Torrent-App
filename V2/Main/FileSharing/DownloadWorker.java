@@ -43,14 +43,14 @@ public class DownloadWorker extends Thread {
                    }
             // If there are no blocks left to ask for
             } else {
-                downloadProcess.addBlocksToQueue(blocks);
+                downloadProcess.addBlocksToQueue(blocks, connection);
             }
         }
     }
 
 
     // Called by the connection to submit the received block
-    public synchronized void submitFileBlockResult(FileBlockResult fileBlockResult){
+    public synchronized void submitFileBlockResult(FileBlockResult fileBlockResult) {
         blocks.add(fileBlockResult); // Add block to the temporary list
         System.out.println(String.format("Submitting file block result: %d", currentIndex));
         notifyAll(); // Notify its arrival

@@ -5,9 +5,7 @@ import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.OpenConnection;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,11 +13,15 @@ public class DownloadProcess {
     private final String PROCESS_ID;
     private final FileTransferManager manager;
     private final FileMetadata fileMetadata;
+
     private PriorityQueue<FileBlockResult> blocks;
     private List<DownloadWorker> workers;
+
     private final int blocksExpected;
     private int currentBlock;
     private int finishedWorkers = 0;
+
+    private HashMap<Integer, Integer> blocksDelieveredPerPort = new HashMap<>();
 
 
     public DownloadProcess(FileTransferManager downloadManager, FileMetadata fileToDownload,
@@ -48,9 +50,11 @@ public class DownloadProcess {
         return currentBlock++;
     }
 
-    public synchronized void addBlocksToQueue(List<FileBlockResult> blocksFromWorker) {
+
+    public synchronized void addBlocksToQueue(List<FileBlockResult> blocksFromWorker, OpenConnection connection) {
         blocks.addAll(blocksFromWorker);
         finishedWorkers++;
+        blocksDelieveredPerPort.put(connection.getCorrespondentPort(), blocksFromWorker.size());
         if(finishedWorkers == workers.size()) {
             delieverFileData();
             shutdownWorkers();
@@ -58,7 +62,7 @@ public class DownloadProcess {
     }
 
     private void delieverFileData() {
-        manager.delieverFileData(blocks, fileMetadata);
+        manager.delieverFileData(blocks, fileMetadata, blocksDelieveredPerPort);
     }
 
     private void shutdownWorkers() {

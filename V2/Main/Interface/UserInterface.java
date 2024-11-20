@@ -216,7 +216,13 @@ public class UserInterface extends JFrame {
         });
     }
 
-    public void showDownloadInfo() {
-        JOptionPane.showMessageDialog(null,"Download efeituado com sucesso :P");
+    public void showDownloadInfo(Map<Integer,Integer> blocksPerSeeder) {
+        String results = "Download efetuado com sucesso!";
+        for (Integer port : blocksPerSeeder.keySet()) {
+            results += String.format("\n Peer %d entregou %d blocos para este download.", port, blocksPerSeeder.get(port));
+        }
+
+
+        JOptionPane.showMessageDialog(null,results);
     }
 }
