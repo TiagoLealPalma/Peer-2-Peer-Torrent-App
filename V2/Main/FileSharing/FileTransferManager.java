@@ -53,7 +53,7 @@ public class FileTransferManager {
 
     }
 
-    public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata, HashMap<Integer, Integer> blocksPerSeeder) {
-        controller.delieverFileData(blocks, fileMetadata, blocksPerSeeder);
+    public void deliverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata, HashMap<Integer, Integer> blocksPerSeeder) {
+        controller.deliverFileData(blocks, fileMetadata, blocksPerSeeder);
     }
 }

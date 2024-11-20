@@ -225,4 +225,8 @@ public class UserInterface extends JFrame {
 
         JOptionPane.showMessageDialog(null,results);
     }
+
+    public void popUpPrint(String string){
+        JOptionPane.showMessageDialog(null, string);
+    }
 }

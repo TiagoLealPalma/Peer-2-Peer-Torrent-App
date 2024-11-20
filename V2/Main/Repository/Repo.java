@@ -113,12 +113,12 @@ public class Repo {
     }
 
     public List<FileBlockResult> calculateFileBlocks(FileMetadata file) {
-        int index = fileMetadataList.indexOf(file); // Arranjar forma mais robusta
-        if(index == -1) return null;
+        List<FileBlockResult> results = new ArrayList<>();
+        int index = fileMetadataList.indexOf(file); // ARRANJAR FORMA MAIS ROBUSTA
+        if(index == -1) return results; // Empty list will be treated as "No corresponding file in directory"
 
         // Gets the file corresponding to the file parametized
         File fileToDivide = directory.listFiles()[index];
-        List<FileBlockResult> results = new ArrayList<>();
         try {
             FileInputStream fis = new FileInputStream(fileToDivide);
 
@@ -135,11 +135,9 @@ public class Repo {
         }
 
         } catch (FileNotFoundException e) {
-            System.out.println("File was not found.");
-            return null;
+            System.err.println("File was not found.");
         } catch (IOException e) {
-            System.out.println("Error occurred trying to read file");
-            return null;
+            System.err.println("Error occurred trying to read file");
         }
         return results;
     }

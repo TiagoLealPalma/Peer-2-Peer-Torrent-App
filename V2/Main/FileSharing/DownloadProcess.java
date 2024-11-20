@@ -4,10 +4,7 @@ import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockResult;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.OpenConnection;
 
-import java.io.File;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class DownloadProcess {
     private final String PROCESS_ID;
@@ -37,6 +34,7 @@ public class DownloadProcess {
     }
 
     public void addWorker(OpenConnection connection) {
+        System.out.println(String.format("New seeder (%d) added to the current download process (%s)",connection.getCorrespondentPort() ,fileMetadata.getFileName()));
         DownloadWorker worker = new DownloadWorker(this, connection, PROCESS_ID);
         workers.add(worker);
         worker.start();
@@ -52,6 +50,7 @@ public class DownloadProcess {
 
 
     public synchronized void addBlocksToQueue(List<FileBlockResult> blocksFromWorker, OpenConnection connection) {
+        System.out.println(String.format("(%d) Acabei o meu upload e entreguei %d blocos.", connection.getCorrespondentPort(), blocksFromWorker.size()));
         blocks.addAll(blocksFromWorker);
         finishedWorkers++;
         blocksDelieveredPerPort.put(connection.getCorrespondentPort(), blocksFromWorker.size());
@@ -62,7 +61,7 @@ public class DownloadProcess {
     }
 
     private void delieverFileData() {
-        manager.delieverFileData(blocks, fileMetadata, blocksDelieveredPerPort);
+        manager.deliverFileData(blocks, fileMetadata, blocksDelieveredPerPort);
     }
 
     private void shutdownWorkers() {

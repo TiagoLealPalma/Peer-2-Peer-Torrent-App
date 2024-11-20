@@ -97,7 +97,7 @@ public class OpenConnection extends Thread{
                 }
             }
         } finally { // Assures all resources used are cleaned before stepping out of the method
-            closeConnection();
+            //closeConnection();
         }
     }
 
@@ -272,7 +272,7 @@ public class OpenConnection extends Thread{
 
     public int getCorrespondentPort(){ return correspondentPort; }
 
-
+    public int getHomePort(){return homePort;}
 
 }
 
