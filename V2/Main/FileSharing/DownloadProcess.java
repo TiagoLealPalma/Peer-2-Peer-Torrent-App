@@ -50,7 +50,7 @@ public class DownloadProcess {
 
 
     public synchronized void addBlocksToQueue(List<FileBlockResult> blocksFromWorker, OpenConnection connection) {
-        System.out.println(String.format("(%d) Acabei o meu upload e entreguei %d blocos.", connection.getCorrespondentPort(), blocksFromWorker.size()));
+        System.out.println(String.format("(%d) Acabei o meu download e entreguei %d blocos.", connection.getHomePort(), blocksFromWorker.size()));
         blocks.addAll(blocksFromWorker);
         finishedWorkers++;
         blocksDelieveredPerPort.put(connection.getCorrespondentPort(), blocksFromWorker.size());

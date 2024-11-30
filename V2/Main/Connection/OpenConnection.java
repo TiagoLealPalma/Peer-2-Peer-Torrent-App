@@ -90,9 +90,9 @@ public class OpenConnection extends Thread{
 
 
                 } catch (ClassNotFoundException e) {
-                    System.out.println("(" + homePort + ") Message type not recognized: " + correspondentPort);
+                    printError(" Message type not recognized: " + correspondentPort);
                 } catch (IOException e) {
-                    System.out.println("(" + homePort + ") Error in reading message: " + correspondentPort);
+                    printError(" Error in reading message: " + correspondentPort);
                     e.printStackTrace();
                 }
             }
@@ -110,7 +110,7 @@ public class OpenConnection extends Thread{
 
             // Handles all possible exceptions
         } catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while connecting to the peer: " + correspondentPort);
+            printError(" Error occurred while connecting to the peer: " + correspondentPort);
             return false;
         }
     }
@@ -121,14 +121,14 @@ public class OpenConnection extends Thread{
             out.flush();
             in = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
-            System.out.println("("+ homePort + ") Failed to connect or set up streams: " + e.getMessage());
+            printMessage("Failed to connect or set up streams: " + e.getMessage());
             return false;
         }
         return true;
     }
 
     public void stopRunning(){
-        System.out.println("("+ homePort + ") Stopping socket thread: " + addressPort);
+        printMessage("Stopping socket thread: " + correspondentPort);
         running = false;
         closeConnection();
         connectionManager.removeConnection(correspondentPort);
@@ -138,10 +138,10 @@ public class OpenConnection extends Thread{
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
-                System.out.println("(" + homePort + ") Connection with " + addressPort + " closed");
+                printMessage("Connection with " + correspondentPort + " closed");
             }
         } catch (IOException e) {
-            System.out.println("(" + homePort + ") Failed to close socket: " + e.getMessage());
+            printError(" Failed to close socket: " + e.getMessage());
         }
     }
 
@@ -199,18 +199,21 @@ public class OpenConnection extends Thread{
             out.writeObject(new NewConnectionRequest(correspondentPort));
             out.flush();
         } catch (IOException e) {
-            System.out.println("(" + homePort + ") Failed to send new connection request to correspondentPort: " + correspondentPort);
+            printError(" Failed to send new connection request to correspondentPort: " + correspondentPort);
         }
     }
 
     // Sends Word Search Request based on the keyWord value on the connection manager
     public void sendWordSearchRequest(WordSearchRequest wordSearchRequest) {
         try {
-            System.out.println("(" + homePort + ") A enviar pedido de pesquisa por '" + connectionManager.getKeyWord() + "'");
+            printMessage("A enviar pedido de pesquisa por '" + connectionManager.getKeyWord() + "'");
             out.writeObject(wordSearchRequest);
             out.flush();
 
-        } catch (IOException e) {System.out.println("(" + homePort + ") Error occurred while sending word search request to correspondentPort: " + correspondentPort);}
+        } catch (IOException e) {
+            printError("Error occurred while sending word search request to correspondent peer: "
+                    + correspondentPort);
+        }
     }
 
     // Sends the file result to whom ever asked
@@ -219,7 +222,7 @@ public class OpenConnection extends Thread{
             out.writeObject(result);
             out.flush();
         }catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending word search result to correspondentPort: " + correspondentPort);
+            printError("Error occurred while sending word search result to correspondent peer: " + correspondentPort);
         }
     }
 
@@ -229,7 +232,7 @@ public class OpenConnection extends Thread{
             out.writeObject(fileDownloadRequest);
             out.flush();
         } catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending download request to correspondentPort: " + correspondentPort);
+            printError("Error occurred while sending download request to correspondent peer: " + correspondentPort);
         }
     }
 
@@ -243,7 +246,7 @@ public class OpenConnection extends Thread{
             out.writeObject(new FileDownloadResponse(id));
             out.flush();
         }catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending FileDownloadResponse to correspondentPort: " + correspondentPort);
+            printError("Error occurred while sending FileDownloadResponse to correspondentPort: " + correspondentPort);
         }
     }
 
@@ -255,7 +258,7 @@ public class OpenConnection extends Thread{
             out.writeObject(fileBlockRequest);
             out.flush();
         }catch (IOException e){
-            System.out.println("(" + homePort + ") Error occurred while sending FileBlockRequest to correspondentPort: " + correspondentPort);
+            printError("Error occurred while sending FileBlockRequest to correspondentPort: " + correspondentPort);
         }
     }
 
@@ -264,7 +267,7 @@ public class OpenConnection extends Thread{
             out.writeObject(fileBlockResult);
             out.flush();
         } catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending FileBlockResult to correspondentPort: " + correspondentPort);
+            printError("Error occurred while sending FileBlockResult to correspondentPort: " + correspondentPort);
         }
     }
 
@@ -274,5 +277,12 @@ public class OpenConnection extends Thread{
 
     public int getHomePort(){return homePort;}
 
+    private void printMessage(String messageToPrint){
+        System.out.println(String.format("(%d) " + messageToPrint, getHomePort()));
+    }
+
+    private void printError(String errorMessageToPrint){
+        System.err.println(String.format("(%d) " + errorMessageToPrint, getHomePort()));
+    }
 }
 

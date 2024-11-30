@@ -107,10 +107,10 @@ public class UserInterface extends JFrame {
                     return;
                 }
 
-                // Extracts the file name from the selected value (removing the counter part if necessary)
+                // Extracts the file name from the selected value (removing the counterpart if necessary)
                 String fileName = selectedValue.split(" <")[0];
 
-                // Find the associated FileMetadata object
+                // Finds the associated FileMetadata object
                 FileMetadata fileToDownload = null;
                 for (FileMetadata file : titles.keySet()) {
                     if (file.getFileName().equals(fileName)) {
