@@ -1,4 +1,4 @@
-package V2.Auxiliary.MessageTypes;
+package V2.Auxiliary;
 
 import java.io.Serializable;
 

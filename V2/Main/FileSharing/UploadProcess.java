@@ -1,7 +1,7 @@
 package V2.Main.FileSharing;
 
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockRequest;
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockResult;
+import V2.Auxiliary.DownloadRelated.FileBlockRequest;
+import V2.Auxiliary.DownloadRelated.FileBlockResult;
 import V2.Main.Connection.OpenConnection;
 
 import java.util.ArrayList;

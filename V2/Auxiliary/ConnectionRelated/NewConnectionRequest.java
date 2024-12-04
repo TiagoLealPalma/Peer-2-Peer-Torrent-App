@@ -1,6 +1,6 @@
-package V2.Auxiliary.MessageTypes.ConnectionRelated;
+package V2.Auxiliary.ConnectionRelated;
 
-import V2.Auxiliary.MessageTypes.Message;
+import V2.Auxiliary.Message;
 
 public class NewConnectionRequest implements Message {
     private final int PORT;

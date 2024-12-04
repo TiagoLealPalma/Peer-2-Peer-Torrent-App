@@ -1,7 +1,8 @@
 package V2.Main.Repository;
 
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockResult;
+import V2.Auxiliary.DownloadRelated.FileBlockResult;
 import V2.Auxiliary.Structs.FileMetadata;
+import V2.Main.Connection.ConnectionManager;
 
 import java.io.*;
 import java.security.MessageDigest;
@@ -15,6 +16,7 @@ public class Repo {
     private MessageDigest digest;
     private static final int BLOCKSIZE = 10240; // in KB
     private List<FileMetadata> fileMetadataList = new ArrayList<FileMetadata>();
+    private static Repo instance;
 
     public Repo(String repoName) {
         directory = new File("./" + repoName);
@@ -22,7 +24,8 @@ public class Repo {
         // Corner cases
         if(!directory.exists()){
             directory.mkdir();
-            System.out.println("Foi criada um novo pasta para disponibilizar ficheiros: " + directory.getAbsolutePath());
+            System.out.println("Foi criada um novo pasta para disponibilizar ficheiros: " + directory.getAbsolutePath() +
+                    "\n Coloque os ficheiros que pretende disponibilizar e atualize o repositório");
             return;
         }
         if(!directory.isDirectory()){
@@ -61,6 +64,22 @@ public class Repo {
             }
         }
     }
+
+    public static synchronized Repo getInstance(String filePath) {
+        if (instance == null) {
+            instance = new Repo(filePath);
+        }
+        return instance;
+    }
+
+    public static synchronized Repo getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("Repo has not been initialized yet.");
+        }
+        return instance;
+    }
+
+
 
     public void refreshRepo(){
         fileMetadataList.clear();

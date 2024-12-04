@@ -1,15 +1,12 @@
 package V2.Main.FileSharing;
 
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockResult;
+import V2.Auxiliary.DownloadRelated.FileBlockResult;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.OpenConnection;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class DownloadProcess {
     private final String PROCESS_ID;

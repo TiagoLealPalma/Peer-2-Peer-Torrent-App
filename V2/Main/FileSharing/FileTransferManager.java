@@ -1,29 +1,45 @@
 package V2.Main.FileSharing;
 
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockResult;
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileDownloadResponse;
+import V2.Auxiliary.DownloadRelated.FileBlockResult;
+import V2.Auxiliary.DownloadRelated.FileDownloadResponse;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.OpenConnection;
-import V2.Main.Controller;
+import V2.Main.Coordinator;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class FileTransferManager {
-    private Controller controller;
-   // private List<UploadProcess> openUploadProcesses;
-    private Map<String, DownloadProcess> openDownloadProcesses;
+    private final Map<String, DownloadProcess> openDownloadProcesses;
     public final int THREADS_FOR_UPLOAD;
-    private ExecutorService executor;
+    private final ExecutorService executor;
+    private static FileTransferManager instance;
 
-    public FileTransferManager(Controller controller, int ThreadsAllowedPerDownload) {
-        this.controller = controller;
+    private FileTransferManager(int ThreadsAllowedPerDownload) {
+
         this.openDownloadProcesses = new HashMap<>();
         this.THREADS_FOR_UPLOAD = ThreadsAllowedPerDownload; // Limits the amount of simultaneous upload processes
         executor = Executors.newFixedThreadPool(THREADS_FOR_UPLOAD);
 
     }
+
+    public static synchronized FileTransferManager getInstance(int ThreadsAllowedPerDownload) {
+        if (instance == null) {
+            instance = new FileTransferManager(ThreadsAllowedPerDownload);
+        }
+        return instance;
+    }
+
+    public static synchronized FileTransferManager getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("FileTransferManager has not been initialized yet.");
+        }
+        return instance;
+    }
+
+
+
 
     // Start a new Download Process
     public void startDownloadProcess(String processId, FileMetadata fileToDownload) {
@@ -54,6 +70,6 @@ public class FileTransferManager {
     }
 
     public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata) {
-        controller.delieverFileData(blocks, fileMetadata);
+        Coordinator.getInstance().delieverFileData(blocks, fileMetadata);
     }
 }

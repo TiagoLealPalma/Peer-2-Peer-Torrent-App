@@ -1,12 +1,12 @@
 package V2.Main.Connection;
 
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockRequest;
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileBlockResult;
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileDownloadRequest;
-import V2.Auxiliary.MessageTypes.DownloadRelated.FileDownloadResponse;
-import V2.Auxiliary.MessageTypes.SearchRelated.FileSearchResult;
-import V2.Auxiliary.MessageTypes.ConnectionRelated.NewConnectionRequest;
-import V2.Auxiliary.MessageTypes.SearchRelated.WordSearchRequest;
+import V2.Auxiliary.DownloadRelated.FileBlockRequest;
+import V2.Auxiliary.DownloadRelated.FileBlockResult;
+import V2.Auxiliary.DownloadRelated.FileDownloadRequest;
+import V2.Auxiliary.DownloadRelated.FileDownloadResponse;
+import V2.Auxiliary.SearchRelated.FileSearchResult;
+import V2.Auxiliary.ConnectionRelated.NewConnectionRequest;
+import V2.Auxiliary.SearchRelated.WordSearchRequest;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.FileSharing.DownloadWorker;
 import V2.Main.FileSharing.UploadProcess;
@@ -76,6 +76,7 @@ public class OpenConnection extends Thread{
                         handleFileSearchResult(fileSearchResult);
                     } else if (message instanceof FileDownloadRequest){
                         FileDownloadRequest fileDownloadRequest = (FileDownloadRequest) message;
+                        System.out.println("recebi download request");
                         handleFileDownloadRequest(fileDownloadRequest);
                     } else if (message instanceof FileDownloadResponse){
                         FileDownloadResponse fileDownloadResponse = (FileDownloadResponse) message;
@@ -261,6 +262,7 @@ public class OpenConnection extends Thread{
 
     public void sendFileBlockResult(FileBlockResult fileBlockResult) {
         try{
+
             out.writeObject(fileBlockResult);
             out.flush();
         } catch (IOException e) {

@@ -1,7 +1,6 @@
-package V2.Auxiliary.MessageTypes.DownloadRelated;
+package V2.Auxiliary.DownloadRelated;
 
-import V2.Auxiliary.MessageTypes.Message;
-import V2.Auxiliary.Structs.FileMetadata;
+import V2.Auxiliary.Message;
 
 public class FileDownloadResponse implements Message{
     private final String PROCESS_ID;

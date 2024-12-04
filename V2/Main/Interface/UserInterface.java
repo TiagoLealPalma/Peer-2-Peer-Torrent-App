@@ -1,7 +1,8 @@
 package V2.Main.Interface;
 
 import V2.Auxiliary.Structs.FileMetadata;
-import V2.Main.Controller;
+import V2.Main.Connection.ConnectionManager;
+import V2.Main.Coordinator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,11 +19,12 @@ public class UserInterface extends JFrame {
     private JButton searchButton, downloadButton, connectButton;
     private Map<FileMetadata, Integer> titles;
     private ArrayList<String> toDisplay;
-    private Controller controller;
+    private static UserInterface instance;
+    private static Coordinator controller = Coordinator.getInstance();
 
-    public UserInterface(Controller controller) {
+    private UserInterface() {
         // Set up the frame
-        setTitle("BitTorrent - PORT: " + controller.PORT);
+        setTitle("BitTorrent - PORT: " + ConnectionManager.getInstance().getPORT());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 400);
         setLayout(new BorderLayout());
@@ -129,12 +131,16 @@ public class UserInterface extends JFrame {
             }
         });
 
-
-        this.controller = controller;
-
         setVisible(true);
     }
 
+
+    public static synchronized UserInterface getInstance() {
+        if (instance == null) {
+            instance = new UserInterface();
+        }
+        return instance;
+    }
 
     private void openConnectPortWindow() throws UnknownHostException {
         JDialog dialog = new JDialog(this, "Adicionar Nó", true);

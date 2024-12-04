@@ -1,6 +1,6 @@
-package V2.Auxiliary.MessageTypes.DownloadRelated;
+package V2.Auxiliary.DownloadRelated;
 
-import V2.Auxiliary.MessageTypes.Message;
+import V2.Auxiliary.Message;
 import V2.Auxiliary.Structs.FileMetadata;
 
 import java.util.UUID;

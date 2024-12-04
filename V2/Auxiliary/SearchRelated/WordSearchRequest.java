@@ -1,6 +1,6 @@
-package V2.Auxiliary.MessageTypes.SearchRelated;
+package V2.Auxiliary.SearchRelated;
 
-import V2.Auxiliary.MessageTypes.Message;
+import V2.Auxiliary.Message;
 
 public class WordSearchRequest implements Message {
     private final String keyWord;
