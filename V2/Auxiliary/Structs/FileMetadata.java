@@ -7,6 +7,8 @@ public class FileMetadata implements Serializable {
     private byte[] hash;
     private int length; // Length in blocks of the file
 
+    // length do ficheiro, que vai ser usado para gerar o numero de blocos
+
     public FileMetadata(String fileName, byte[] hash, int length){
         this.fileName = fileName;
         this.hash = hash;

@@ -173,6 +173,7 @@ public class Repo {
             System.err.println("Error writing file: " + e.getMessage());
             return false;
         }
+        fileMetadataList.add(fileMetadata);
         return true;
     }
 

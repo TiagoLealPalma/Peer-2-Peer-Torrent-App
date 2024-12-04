@@ -199,7 +199,7 @@ public class UserInterface extends JFrame {
     }
 
     // Filter is applied client side, no need to request info based on a filter
-    public void addContentToSearchList(List<FileMetadata> list) {
+    public synchronized void addContentToSearchList(List<FileMetadata> list) {
         // Merges the new list with the existing map
         for (FileMetadata file : list) {
            titles.merge(file, 1, Integer:: sum);
