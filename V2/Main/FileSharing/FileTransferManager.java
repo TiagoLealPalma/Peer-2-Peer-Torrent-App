@@ -1,10 +1,11 @@
 package V2.Main.FileSharing;
 
 import V2.Auxiliary.DownloadRelated.FileBlockResult;
-import V2.Auxiliary.DownloadRelated.FileDownloadResponse;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.OpenConnection;
 import V2.Main.Coordinator;
+import V2.Main.Interface.UserInterface;
+import V2.Main.Repository.Repo;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -42,9 +43,11 @@ public class FileTransferManager {
 
 
     // Start a new Download Process
-    public void startDownloadProcess(String processId, FileMetadata fileToDownload) {
-        openDownloadProcesses.put(processId, new DownloadProcess(this,
-                                                                            fileToDownload, processId));
+    public String startDownloadProcess(FileMetadata fileToDownload) {
+        String processId = UUID.randomUUID().toString();
+        openDownloadProcesses.put(processId, new DownloadProcess(this, fileToDownload,
+                                                                        Repo.BLOCKSIZE, processId));
+        return processId;
     }
 
     // Start a new upload task and manage it with the thread pool
@@ -58,18 +61,16 @@ public class FileTransferManager {
 
     // Check if a download process corresponding to this processId is already created, if not created.
     // If it is created, just add a new worker to handle the process
-    public void addNewSeederToDownloadProcess(FileDownloadResponse fileDownloadResponse, OpenConnection connection) {
-        String processId = fileDownloadResponse.getPROCESS_ID();
-
+    public void addNewSeederToDownloadProcess(String processId, OpenConnection connection) {
         if(openDownloadProcesses.isEmpty() || openDownloadProcesses.get(processId) == null) {
-            System.out.println("Tentativa de acesso a um processo de Download inexistente");
+            System.err.println("Tentativa de acesso a um processo de Download inexistente");
             return;
         }
         openDownloadProcesses.get(processId).addWorker(connection);
-
     }
 
-    public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata) {
-        Coordinator.getInstance().delieverFileData(blocks, fileMetadata);
+    public synchronized void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata, String results) {
+        if(Repo.getInstance().writeFile(blocks, fileMetadata))
+            UserInterface.getInstance().popUpMessage("Ficheiro escrito com sucesso! \n" + results);
     }
 }

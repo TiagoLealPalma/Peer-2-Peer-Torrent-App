@@ -2,14 +2,15 @@ package V2.Main.Connection;
 
 import V2.Auxiliary.DownloadRelated.FileBlockRequest;
 import V2.Auxiliary.DownloadRelated.FileBlockResult;
-import V2.Auxiliary.DownloadRelated.FileDownloadRequest;
-import V2.Auxiliary.DownloadRelated.FileDownloadResponse;
 import V2.Auxiliary.SearchRelated.FileSearchResult;
 import V2.Auxiliary.ConnectionRelated.NewConnectionRequest;
 import V2.Auxiliary.SearchRelated.WordSearchRequest;
 import V2.Auxiliary.Structs.FileMetadata;
+import V2.Main.Coordinator;
 import V2.Main.FileSharing.DownloadWorker;
 import V2.Main.FileSharing.UploadProcess;
+import V2.Main.Interface.UserInterface;
+import V2.Main.Repository.Repo;
 
 import java.io.*;
 import java.net.*;
@@ -58,8 +59,7 @@ public class OpenConnection extends Thread{
     @Override
     public void run() {
         try {
-            sendNewConnectionRequest();
-            sendWordSearchRequest(new WordSearchRequest(connectionManager.getKeyWord()));
+            sendWordSearchRequest(new WordSearchRequest(UserInterface.getInstance().getKeyword()));
             while (running) {
                 try {
 
@@ -74,13 +74,6 @@ public class OpenConnection extends Thread{
                     } else if (message instanceof FileSearchResult) {
                         FileSearchResult fileSearchResult = (FileSearchResult) message;
                         handleFileSearchResult(fileSearchResult);
-                    } else if (message instanceof FileDownloadRequest){
-                        FileDownloadRequest fileDownloadRequest = (FileDownloadRequest) message;
-                        System.out.println("recebi download request");
-                        handleFileDownloadRequest(fileDownloadRequest);
-                    } else if (message instanceof FileDownloadResponse){
-                        FileDownloadResponse fileDownloadResponse = (FileDownloadResponse) message;
-                        handleFileDownloadResponse(fileDownloadResponse);
                     }else if (message instanceof FileBlockRequest){
                         FileBlockRequest fileBlockRequest = (FileBlockRequest) message;
                         handleFileBlockRequest(fileBlockRequest);
@@ -93,8 +86,8 @@ public class OpenConnection extends Thread{
                 } catch (ClassNotFoundException e) {
                     System.out.println("(" + homePort + ") Message type not recognized: " + correspondentPort);
                 } catch (IOException e) {
-                    System.out.println("(" + homePort + ") Error in reading message: " + correspondentPort);
                     e.printStackTrace();
+                    System.out.println("(" + homePort + ") Error in reading message: " + correspondentPort);
                 }
             }
         } finally { // Assures all resources used are cleaned before stepping out of the method
@@ -156,8 +149,8 @@ public class OpenConnection extends Thread{
 
     private void handleWordSearchRequest(WordSearchRequest wordSearchRequest) {
         FileSearchResult result = new FileSearchResult(
-                                            connectionManager.wordSearchResponse(wordSearchRequest.getKeyWord()));
-        sendFileSearchResult(result);
+                Repo.getInstance().wordSearchResponse(wordSearchRequest.getKeyWord()), wordSearchRequest);
+        sendMessage(result);
     }
 
 
@@ -165,25 +158,20 @@ public class OpenConnection extends Thread{
         List<FileMetadata> result = fileSearchResult.getList();
         if(result.isEmpty()) return;
 
-        connectionManager.updateUiList(fileSearchResult.getList());
+        connectionManager.receiveFileSearch(fileSearchResult.getList(), this);
     }
 
-
-    private void handleFileDownloadRequest(FileDownloadRequest fileDownloadRequest) {
-        if(uploadProcesses.containsKey(fileDownloadRequest.getId())) return; // If this process has already been started
-        connectionManager.attemptToStartUploadProcess(this, fileDownloadRequest);
-    }
-
-
-    private void handleFileDownloadResponse(FileDownloadResponse fileDownloadResponse) {
-        connectionManager.addNewSeederToDownloadProcess(fileDownloadResponse, this);
-    }
 
 
     private void handleFileBlockRequest(FileBlockRequest fileBlockRequest) {
         UploadProcess process = uploadProcesses.get(fileBlockRequest.getId());
-        if(process == null) return;
 
+        // Se o processo ainda não tiver iniciado
+        if(process == null) {
+            process = Coordinator.getInstance().StartUploadProcess(this, fileBlockRequest);
+            if(process == null)  return;// sendMessage(); necessita tratar do erro caso alguem entretanto apague um ficheiro da diretoria
+            uploadProcesses.put(fileBlockRequest.getId(), process);
+        }
         process.requestBlock(fileBlockRequest);
     }
 
@@ -193,7 +181,7 @@ public class OpenConnection extends Thread{
         worker.submitFileBlockResult(fileBlockResult);
     }
 
-    /* ---------------------------------------------- Send Messages ------------------------------------------------- */
+    /* ---------------------------------------------- Send Message -------------------------------------------------- */
 
     public void sendNewConnectionRequest(){
         try {
@@ -224,42 +212,6 @@ public class OpenConnection extends Thread{
         }
     }
 
-    // Send download request to peer
-    public void sendFileDownloadRequest(FileDownloadRequest fileDownloadRequest) {
-        try{
-            out.writeObject(fileDownloadRequest);
-            out.flush();
-        } catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending download request to correspondentPort: " + correspondentPort);
-        }
-    }
-
-    // Create direct communication between this connection thread and upload thread, so
-    // the main thread cant bottleneck the transfer
-    public void sendFileDownloadResponse(String id, UploadProcess uploadProcess) {
-        if(!uploadProcesses.containsKey(uploadProcess.getId()))
-            uploadProcesses.put(id, uploadProcess);
-
-        try {
-            out.writeObject(new FileDownloadResponse(id));
-            out.flush();
-        }catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending FileDownloadResponse to correspondentPort: " + correspondentPort);
-        }
-    }
-
-    public void sendFileBlockRequest(FileBlockRequest fileBlockRequest, DownloadWorker downloadWorker) {
-        if(!downloadWorkers.containsKey(downloadWorker.getId()))
-            downloadWorkers.put(fileBlockRequest.getId(), downloadWorker);
-
-        try{
-            out.writeObject(fileBlockRequest);
-            out.flush();
-        }catch (IOException e){
-            System.out.println("(" + homePort + ") Error occurred while sending FileBlockRequest to correspondentPort: " + correspondentPort);
-        }
-    }
-
     public void sendFileBlockResult(FileBlockResult fileBlockResult) {
         try{
 
@@ -270,11 +222,20 @@ public class OpenConnection extends Thread{
         }
     }
 
-    public Socket getSocket() { return socket; }
+    public void sendMessage(Serializable message){
+        try{
+            out.writeObject(message);
+            out.flush();
+        } catch (IOException e) {
+            System.out.println("(" + homePort + ") Error occurred while sending message to correspondentPort: " + correspondentPort);
+        }
+    }
 
     public int getCorrespondentPort(){ return correspondentPort; }
 
-
-
+    public void connectDownloadWorker(String processID, DownloadWorker downloadWorker) {
+        if(!downloadWorkers.containsKey(processID) )
+            downloadWorkers.put(processID, downloadWorker);
+    }
 }
 

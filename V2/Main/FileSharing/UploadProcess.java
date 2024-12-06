@@ -13,8 +13,6 @@ public class UploadProcess implements Runnable{
     private final String PROCESS_ID;
     private final FileTransferManager manager;
     private final OpenConnection connection;
-    private boolean running = true;
-
 
     public UploadProcess(OpenConnection connection, String processID,
                          FileTransferManager manager, List<FileBlockResult> blocks) {
@@ -22,11 +20,17 @@ public class UploadProcess implements Runnable{
         this.manager = manager;
         this.connection = connection;
         this.blocks = blocks;
+        System.out.println("Upload: " + blocks.size());
+
+        // Atribuir Ids
+        for (FileBlockResult block : blocks) {
+            block.setId(processID);
+        }
     }
 
     @Override
     public void run() {
-        while(running){
+        while(!blocks.isEmpty()){
             while(indexBuffer.isEmpty()){
                 synchronized (this){
                     try {
@@ -38,6 +42,7 @@ public class UploadProcess implements Runnable{
             FileBlockResult blockToSend = blocks.get(indexToSend);
             blockToSend.setId(PROCESS_ID);
             connection.sendFileBlockResult(blockToSend);
+
         }
     }
 

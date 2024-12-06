@@ -1,8 +1,10 @@
 package V2.Main.Interface;
 
+import V2.Auxiliary.SearchRelated.WordSearchRequest;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.ConnectionManager;
 import V2.Main.Coordinator;
+import V2.Main.Repository.Repo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +22,7 @@ public class UserInterface extends JFrame {
     private Map<FileMetadata, Integer> titles;
     private ArrayList<String> toDisplay;
     private static UserInterface instance;
-    private static Coordinator controller = Coordinator.getInstance();
+    private static Coordinator coordinator = Coordinator.getInstance();
 
     private UserInterface() {
         // Set up the frame
@@ -65,14 +67,14 @@ public class UserInterface extends JFrame {
 
         // Actions
 
-        // Search button action listener - Gets the key word and passes it to the controller so it can run the
+        // Search button action listener - Gets the key word and passes it to the coordinator so it can run the
         // search across all the peers
         searchButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 titles.clear();
-                controller.filterSearchList(searchField.getText());
+                ConnectionManager.getInstance().floodMessage(new WordSearchRequest(searchField.getText()));
             }
         });
 
@@ -94,7 +96,7 @@ public class UserInterface extends JFrame {
         refreshRepo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.refreshRepo();
+                Repo.getInstance().refreshRepo();
             }
         });
 
@@ -105,7 +107,7 @@ public class UserInterface extends JFrame {
                 String selectedValue = resultList.getSelectedValue();
 
                 if (selectedValue == null) {
-                    JOptionPane.showMessageDialog(null, "Por favor, selecione um item para descarregar.");
+                    popUpMessage( "Por favor, selecione um item para descarregar.");
                     return;
                 }
 
@@ -123,10 +125,10 @@ public class UserInterface extends JFrame {
 
                 // Check if we found the FileMetadata object
                 if (fileToDownload != null) {
-                    // Pass the FileMetadata object to the controller to start the download
-                    controller.initiateDownload(fileToDownload);
+                    // Pass the FileMetadata object to the coordinator to start the download
+                    coordinator.initiateDownload(fileToDownload);
                 } else {
-                    JOptionPane.showMessageDialog(null, "Erro: o item selecionado não foi encontrado.");
+                    popUpMessage( "Erro: o item selecionado não foi encontrado.");
                 }
             }
         });
@@ -166,29 +168,29 @@ public class UserInterface extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 int parsedPort;
                 try{ parsedPort = Integer.parseInt(port.getText());} catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Insira um porto válido.");
+                    popUpMessage( "Insira um porto válido.");
                     return;
                 }
 
-                int value = controller.requestNewConnection(address.getText(), parsedPort, searchField.getText());
+                int value = ConnectionManager.getInstance().requestConnection(address.getText(), parsedPort);
 
                 // Non-Valid Connection
                 if(value < 20) {
                     if(value == 11)
-                        JOptionPane.showMessageDialog(null, "Conexão já se encontra estabelecida.");
+                        popUpMessage( "Conexão já se encontra estabelecida.");
                     else if(value == 12)
-                        JOptionPane.showMessageDialog(null, "Se procura uma ligação consigo próprio, tente o psicolgo :)");
+                        popUpMessage("Se procura uma ligação consigo próprio, tente o psicolgo :)");
                     else if (value == 13)
-                        JOptionPane.showMessageDialog(null, "Use portos entre 8080 e 65535.");
+                        popUpMessage("Use portos entre 8080 e 65535.");
                 }
                 // Successful Connection
                 else if (value == 20) {
-                    JOptionPane.showMessageDialog(null, "Ligação estabelecida com sucesso.\n(" + address.getText() + ":" + port.getText() + ")");
+                    popUpMessage( "Ligação estabelecida com sucesso.\n(" + address.getText() + ":" + port.getText() + ")");
                     dialog.dispose();
                 }
                 // Connection Failed
                 else if (value >= 30)
-                    JOptionPane.showMessageDialog(null, "Não foi possivel estabelecer esta ligação.");
+                    popUpMessage( "Não foi possivel estabelecer esta ligação.");
 
             }
         });
@@ -222,7 +224,16 @@ public class UserInterface extends JFrame {
         });
     }
 
+    public synchronized void popUpMessage(String message){
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(this,message);
+        });
+    }
     public void showDownloadInfo() {
-        JOptionPane.showMessageDialog(null,"Download efeituado com sucesso :P");
+        popUpMessage("Download efeituado com sucesso :P");
+    }
+
+    public String getKeyword() {
+        return searchField.getText();
     }
 }

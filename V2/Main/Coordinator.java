@@ -1,8 +1,7 @@
 package V2.Main;
 
+import V2.Auxiliary.DownloadRelated.FileBlockRequest;
 import V2.Auxiliary.DownloadRelated.FileBlockResult;
-import V2.Auxiliary.DownloadRelated.FileDownloadRequest;
-import V2.Auxiliary.DownloadRelated.FileDownloadResponse;
 import V2.Auxiliary.SearchRelated.WordSearchRequest;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.ConnectionManager;
@@ -33,62 +32,24 @@ public class Coordinator {
     // a request is flooded across all connected peers
     public void initiateDownload(FileMetadata fileToDownload) {
         // Create the request so the UUID is generated
-        FileDownloadRequest request = new FileDownloadRequest(fileToDownload);
-        String processId = request.getId();
 
-        FileTransferManager.getInstance().startDownloadProcess(processId, fileToDownload);
-        ConnectionManager.getInstance().floodMessage(request);
+        String processId = FileTransferManager.getInstance().startDownloadProcess(fileToDownload);
+        ConnectionManager.getInstance().prepareSeeders(processId, fileToDownload);
     }
 
 
     // Check for the requested file, if present become a seeder for the request download
-    public void attemptToStartUploadProcess(OpenConnection connectionWithDownloadingPeer, FileDownloadRequest request){
+    public UploadProcess StartUploadProcess(OpenConnection connectionWithDownloadingPeer, FileBlockRequest request){
         // Check if the file is present in repo, if so calculate blocks
-        List<FileBlockResult> blocks = Repo.getInstance().calculateFileBlocks(request.getFile());
-        if(blocks.isEmpty()) return; // File isn't present in repo
+        List<FileBlockResult> blocks = Repo.getInstance().calculateFileBlocks(request.getMetadata(), request.getPreferedBlockSize());
+        if(blocks.isEmpty()) return null; // File isn't present in repo
 
         // Send confirmation to the requesting peer and start an upload process
         UploadProcess process = FileTransferManager.getInstance().startUploadProcess(blocks, connectionWithDownloadingPeer, request.getId());
-        ConnectionManager.getInstance().sendDownloadResponse(connectionWithDownloadingPeer, request.getId(), process);
+        return process;
     }
-
-
-    public void addNewSeederToDownloadProcess(FileDownloadResponse fileDownloadResponse, OpenConnection connection) {
-        FileTransferManager.getInstance().addNewSeederToDownloadProcess(fileDownloadResponse, connection);
-    }
-
-/*------------------------------------------------- Connection Related -----------------------------------------------*/
-
-    public int requestNewConnection(String address, int port, String keyWord){
-        ConnectionManager.getInstance().setKeyWord(keyWord);
-        return ConnectionManager.getInstance().requestConnection(address, port);
-    }
-
-    public void filterSearchList(String keyWord){
-        ConnectionManager.getInstance().setKeyWord(keyWord);
-        ConnectionManager.getInstance().floodMessage(new WordSearchRequest(keyWord));
-    }
-
-
-
-
-/*----------------------------------------------------- File Related -------------------------------------------------*/
-
-    public List<FileMetadata> wordSearchResponse(String keyWord) {
-        return Repo.getInstance().wordSearchResponse(keyWord);
-    }
-
-    public void refreshRepo() {
-        Repo.getInstance().refreshRepo();
-    }
-
-
-
 
 /*---------------------------------------------------------- UI ------------------------------------------------------*/
-    public void updateUiList(List<FileMetadata> list){
-        UserInterface.getInstance().addContentToSearchList(list);
-    }
 
     public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata) {
         if(Repo.getInstance().writeFile(blocks, fileMetadata)){

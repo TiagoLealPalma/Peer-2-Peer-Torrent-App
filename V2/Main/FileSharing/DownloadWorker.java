@@ -2,6 +2,7 @@ package V2.Main.FileSharing;
 
 import V2.Auxiliary.DownloadRelated.FileBlockRequest;
 import V2.Auxiliary.DownloadRelated.FileBlockResult;
+import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.OpenConnection;
 
 import java.util.ArrayList;
@@ -13,7 +14,6 @@ public class DownloadWorker extends Thread {
     private final OpenConnection connection;
     private List<FileBlockResult> blocks;
     private final String PROCESS_ID;
-    private int currentIndex = 0;
     private boolean running = true;
 
     public DownloadWorker(DownloadProcess downloadProcess, OpenConnection connection, String processId) {
@@ -21,19 +21,21 @@ public class DownloadWorker extends Thread {
         this.connection = connection;
         PROCESS_ID = processId;
         this.blocks = new ArrayList<>();
-
+        connection.connectDownloadWorker(processId, this);
+        start();
     }
 
     @Override
     public void run() {
         while(running){
             // Get the next needed index
-            currentIndex = downloadProcess.getNextIndex();
+            FileBlockRequest currentRequest = downloadProcess.getNextRequest();
 
             // If there are still blocks left to ask for
-            if(currentIndex != -1) {
+            if(currentRequest != null) {
                 // Ask for block
-                connection.sendFileBlockRequest(new FileBlockRequest(currentIndex, PROCESS_ID), this);
+                connection.sendMessage(currentRequest);
+                System.out.println(String.format("Pedi o bloco %d ao %d", currentRequest.getBlockIndex(), connection.getCorrespondentPort()));
                    synchronized (this) {
                        try {
                            wait(); // Wait for the arrival of the block
@@ -43,7 +45,8 @@ public class DownloadWorker extends Thread {
                    }
             // If there are no blocks left to ask for
             } else {
-                downloadProcess.addBlocksToQueue(blocks);
+                running = false;
+                downloadProcess.addBlocksToQueue(blocks, this); //Entregar diretamente ao writer assim que recebe um bloco
             }
         }
     }
@@ -52,7 +55,11 @@ public class DownloadWorker extends Thread {
     // Called by the connection to submit the received block
     public synchronized void submitFileBlockResult(FileBlockResult fileBlockResult){
         blocks.add(fileBlockResult); // Add block to the temporary list
-        System.out.println(String.format("Submitting file block result: %d", currentIndex));
+        System.out.println(String.format("Submitting file block result: %d", fileBlockResult.getIndex()));
         notifyAll(); // Notify its arrival
+    }
+
+    public OpenConnection getConnection() {
+        return connection;
     }
 }

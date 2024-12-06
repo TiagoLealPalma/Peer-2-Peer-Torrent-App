@@ -18,6 +18,7 @@ public class FileBlockResult implements Message, Comparable<FileBlockResult> {
     public FileBlockResult(byte[] block, int index) {
         this.block = block;
         this.blockSize = block.length;
+        this.index = index;
     }
 
     public int getIndex() {return index;}
@@ -28,6 +29,6 @@ public class FileBlockResult implements Message, Comparable<FileBlockResult> {
 
     @Override
     public int compareTo(FileBlockResult o) {
-        return o.getIndex() - this.getIndex();
+        return this.getIndex() - o.getIndex();
     }
 }

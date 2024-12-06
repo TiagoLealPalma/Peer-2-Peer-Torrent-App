@@ -7,8 +7,11 @@ import java.util.List;
 
 public class FileSearchResult implements Message {
     private final List<FileMetadata> list;
-    public FileSearchResult(List<FileMetadata> list) {
+    private final WordSearchRequest request;
+    public FileSearchResult(List<FileMetadata> list, WordSearchRequest request)
+    {
         this.list = list;
+        this.request = request;
     }
 
     public List<FileMetadata> getList() {
