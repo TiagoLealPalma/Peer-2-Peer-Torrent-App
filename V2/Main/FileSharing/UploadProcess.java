@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UploadProcess implements Runnable{
-    private List<Integer> indexBuffer = new ArrayList();
+    private List<FileBlockRequest> requestBuffer = new ArrayList();
     private List<FileBlockResult> blocks;
     private final String PROCESS_ID;
     private final FileTransferManager manager;
@@ -31,24 +31,28 @@ public class UploadProcess implements Runnable{
     @Override
     public void run() {
         while(!blocks.isEmpty()){
-            while(indexBuffer.isEmpty()){
+            while(requestBuffer.isEmpty()){
                 synchronized (this){
                     try {
                         wait();
                     } catch (InterruptedException e) {System.out.println("Processo " + PROCESS_ID + " interrupted");}
                 }
             }
-            int indexToSend = indexBuffer.removeFirst();
-            FileBlockResult blockToSend = blocks.get(indexToSend);
-            blockToSend.setId(PROCESS_ID);
-            connection.sendFileBlockResult(blockToSend);
+            FileBlockRequest request = requestBuffer.removeFirst();
+            FileBlockResult result = null;
 
+            for (FileBlockResult block : blocks) {
+                if(block.equals(request)) result = block;
+            }
+            if(result == null) System.err.println("Erro occurreu a tentar enviar o bloco com offset " + request.getOffset());
+            // If not, send the block response normally
+            connection.sendMessage(result);
         }
     }
 
     public synchronized void requestBlock(FileBlockRequest request){
-        indexBuffer.add(request.getBlockIndex());
-        System.out.println(String.format("Bloco %d entregue", request.getBlockIndex()));
+        requestBuffer.add(request);
+        System.out.println(String.format("Bloco %d entregue", request.getOffset()));
         notifyAll();
     }
 

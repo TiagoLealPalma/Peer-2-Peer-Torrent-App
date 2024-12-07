@@ -4,31 +4,39 @@ import V2.Auxiliary.Message;
 
 public class FileBlockResult implements Message, Comparable<FileBlockResult> {
     private byte[] block;
-    private int blockSize;
     private String id;
-    private int index;
+    private final int offset;
+    private final int length;
 
 
-    public FileBlockResult(byte[] block, String id, int index) {
+    public FileBlockResult(byte[] block, String id, int offset) {
         this.block = block;
         this.id = id;
-        this.blockSize = block.length;
+        this.length = block.length;
+        this.offset = offset;
     }
 
-    public FileBlockResult(byte[] block, int index) {
+    public FileBlockResult(byte[] block, int offset) {
         this.block = block;
-        this.blockSize = block.length;
-        this.index = index;
+        this.length = block.length;
+        this.offset = offset;
     }
 
-    public int getIndex() {return index;}
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof FileBlockRequest request)
+            return this.id.equals(request.getId()) && this.offset == request.getOffset() && this.length == request.getLength();
+        return super.equals(obj);
+    }
+
+    public int getOffset() {return offset;}
+    public int getLength() {return length;}
     public byte[] getBlock() {return block;}
     public String getId() {return id;}
-    public int getBlockSize() {return blockSize;}
     public void setId(String id) {this.id = id;}
 
     @Override
     public int compareTo(FileBlockResult o) {
-        return this.getIndex() - o.getIndex();
+        return this.getOffset() - o.getOffset();
     }
 }

@@ -69,8 +69,4 @@ public class FileTransferManager {
         openDownloadProcesses.get(processId).addWorker(connection);
     }
 
-    public synchronized void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata, String results) {
-        if(Repo.getInstance().writeFile(blocks, fileMetadata))
-            UserInterface.getInstance().popUpMessage("Ficheiro escrito com sucesso! \n" + results);
-    }
 }

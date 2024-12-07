@@ -121,7 +121,7 @@ public class Repo {
         return list;
     }
 
-    public List<FileBlockResult> calculateFileBlocks(FileMetadata file, int preferedBlockSize) {
+    public List<FileBlockResult> calculateFileBlocks(FileMetadata file, int preferredBlockSize) {
         int index = fileMetadataList.indexOf(file);
         if(index == -1) return null;
 
@@ -130,17 +130,17 @@ public class Repo {
         try {
             FileInputStream fis = new FileInputStream(fileToDivide);
 
-
-        byte[] buffer = new byte[preferedBlockSize];
+        int totalBytesRead = 0;
+        byte[] buffer = new byte[preferredBlockSize];
         int bytesRead = 0;
-        int blockIndex = 0;
 
+            System.out.println(file.getLength());
         while((bytesRead = fis.read(buffer)) != -1){
             byte[] blockData = new byte[bytesRead]; // Create a new array for the block
             System.arraycopy(buffer, 0, blockData, 0, bytesRead); // Copy the data
-            results.add(new FileBlockResult(blockData, blockIndex));
-            blockIndex++;
-            System.out.println("Block " + blockIndex + ": bytesRead = " + bytesRead);
+            results.add(new FileBlockResult(blockData, totalBytesRead));
+            System.out.println("Block " + totalBytesRead + ": bytesRead = " + bytesRead);
+            totalBytesRead+=bytesRead;
 
         }
 

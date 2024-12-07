@@ -2,11 +2,14 @@ package V2.Main.FileSharing;
 
 import V2.Auxiliary.DownloadRelated.FileBlockResult;
 import V2.Auxiliary.Structs.FileMetadata;
+import V2.Main.Interface.UserInterface;
 import V2.Main.Repository.Repo;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.PriorityQueue;
 
 public class FileWriter extends Thread{
@@ -15,6 +18,8 @@ public class FileWriter extends Thread{
     private final PriorityQueue<FileBlockResult> data;
     private final int blocksExpected;
     private final FileMetadata fileMetadata;
+    private long startTime = System.currentTimeMillis();
+    private HashMap<DownloadWorker, Integer> workerData = new HashMap<>();
 
     public FileWriter(DownloadProcess download, int blocksExpected, FileMetadata fileMetadata) {
         this.directory = Repo.getInstance().directory;
@@ -36,9 +41,17 @@ public class FileWriter extends Thread{
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            // Write file
-            writeFile();
         }
+        writeFile();
+        Repo.getInstance().refreshRepo();
+        displaySuccessMessage();
+    }
+
+    public synchronized void putBlock(FileBlockResult block, DownloadWorker worker){
+        workerData.put(worker, workerData.getOrDefault(worker, 0)+1);
+        System.out.println("Bloco adicionado " + block.getOffset());
+        data.add(block);
+        notifyAll();
     }
 
 
@@ -68,7 +81,7 @@ public class FileWriter extends Thread{
             FileOutputStream fos = new FileOutputStream(path);
             while(!data.isEmpty()) {
                 FileBlockResult block = data.poll();
-                System.out.println(block.getIndex());
+                System.out.println(block.getOffset());
                 fos.write(block.getBlock());
             }
             System.out.println("File ("+fileMetadata.getFileName()+") written successfully.");
@@ -77,6 +90,16 @@ public class FileWriter extends Thread{
             return false;
         }
         return true;
+    }
+
+
+    private void displaySuccessMessage() {
+        String toDisplay = "Download concluido com sucesso!";
+        for(Map.Entry<DownloadWorker, Integer> entry : workerData.entrySet()) {
+            toDisplay = toDisplay + "\nPorto " + entry.getKey().getConnection().getCorrespondentPort() + ": " + entry.getValue() + " blocos enviados";
+        }
+        toDisplay += "\nTempo de Download: " + (System.currentTimeMillis() - startTime) + "ms";
+        UserInterface.getInstance().popUpMessage(toDisplay);
     }
 
 }

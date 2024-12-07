@@ -183,15 +183,6 @@ public class OpenConnection extends Thread{
 
     /* ---------------------------------------------- Send Message -------------------------------------------------- */
 
-    public void sendNewConnectionRequest(){
-        try {
-            out.writeObject(new NewConnectionRequest(correspondentPort));
-            out.flush();
-        } catch (IOException e) {
-            System.out.println("(" + homePort + ") Failed to send new connection request to correspondentPort: " + correspondentPort);
-        }
-    }
-
     // Sends Word Search Request based on the keyWord value on the connection manager
     public void sendWordSearchRequest(WordSearchRequest wordSearchRequest) {
         try {
@@ -202,27 +193,8 @@ public class OpenConnection extends Thread{
         } catch (IOException e) {System.out.println("(" + homePort + ") Error occurred while sending word search request to correspondentPort: " + correspondentPort);}
     }
 
-    // Sends the file result to whom ever asked
-    public void sendFileSearchResult(FileSearchResult result) {
-        try{
-            out.writeObject(result);
-            out.flush();
-        }catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending word search result to correspondentPort: " + correspondentPort);
-        }
-    }
 
-    public void sendFileBlockResult(FileBlockResult fileBlockResult) {
-        try{
-
-            out.writeObject(fileBlockResult);
-            out.flush();
-        } catch (IOException e) {
-            System.out.println("(" + homePort + ") Error occurred while sending FileBlockResult to correspondentPort: " + correspondentPort);
-        }
-    }
-
-    public void sendMessage(Serializable message){
+    public synchronized void sendMessage(Serializable message){
         try{
             out.writeObject(message);
             out.flush();

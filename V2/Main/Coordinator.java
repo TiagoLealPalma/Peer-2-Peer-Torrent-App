@@ -2,7 +2,6 @@ package V2.Main;
 
 import V2.Auxiliary.DownloadRelated.FileBlockRequest;
 import V2.Auxiliary.DownloadRelated.FileBlockResult;
-import V2.Auxiliary.SearchRelated.WordSearchRequest;
 import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Connection.ConnectionManager;
 import V2.Main.Connection.OpenConnection;
@@ -41,20 +40,12 @@ public class Coordinator {
     // Check for the requested file, if present become a seeder for the request download
     public UploadProcess StartUploadProcess(OpenConnection connectionWithDownloadingPeer, FileBlockRequest request){
         // Check if the file is present in repo, if so calculate blocks
-        List<FileBlockResult> blocks = Repo.getInstance().calculateFileBlocks(request.getMetadata(), request.getPreferedBlockSize());
+        List<FileBlockResult> blocks = Repo.getInstance().calculateFileBlocks(request.getMetadata(), request.getPreferredBlockSize());
         if(blocks.isEmpty()) return null; // File isn't present in repo
 
         // Send confirmation to the requesting peer and start an upload process
         UploadProcess process = FileTransferManager.getInstance().startUploadProcess(blocks, connectionWithDownloadingPeer, request.getId());
         return process;
-    }
-
-/*---------------------------------------------------------- UI ------------------------------------------------------*/
-
-    public void delieverFileData(PriorityQueue<FileBlockResult> blocks, FileMetadata fileMetadata) {
-        if(Repo.getInstance().writeFile(blocks, fileMetadata)){
-            UserInterface.getInstance().showDownloadInfo();
-        }
     }
 
 

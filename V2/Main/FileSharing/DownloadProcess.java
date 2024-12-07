@@ -16,8 +16,6 @@ public class DownloadProcess {
     private List<DownloadWorker> workers;
     private List<FileBlockRequest> requests;
     private int runningWorkers = 0;
-    private String workersBlocksReceived = "";
-    private long startTime;
     private FileWriter writer;
 
 
@@ -27,30 +25,31 @@ public class DownloadProcess {
         this.manager = downloadManager;
         this.fileMetadata = fileToDownload;
 
-        startTime = System.currentTimeMillis();
-
         workers = new ArrayList<>();
         requests = new ArrayList<>();
 
         // Calcular lista fileBlockRequests
         int bytesLeft = fileToDownload.getLength();
         int blocksTotalSize = 0;
+        System.out.println(fileToDownload.getLength());
 
-        while(bytesLeft < 0) {
+        while(bytesLeft > 0) {
             int diferenceToZero = 0;
             if((bytesLeft -= preferedSizeOfBlock) < 0) diferenceToZero = bytesLeft;
-            requests.add(new FileBlockRequest(blocksTotalSize, PROCESS_ID, fileMetadata, preferedSizeOfBlock + diferenceToZero));
+            requests.add(new FileBlockRequest( PROCESS_ID, fileMetadata, blocksTotalSize, preferedSizeOfBlock,preferedSizeOfBlock + diferenceToZero));
+            System.out.println("Block " + blocksTotalSize + ": bytesRead = " + preferedSizeOfBlock + diferenceToZero);
             blocksTotalSize += preferedSizeOfBlock;
+
         }
         System.out.println("lista:" + requests.size());
 
         // Writer
-        writer = new FileWriter(this, requests.size());
+        writer = new FileWriter(this, requests.size(), fileMetadata);
     }
 
     public void addWorker(OpenConnection connection) {
         runningWorkers++;
-        workers.add(new DownloadWorker(this, connection, PROCESS_ID));
+        workers.add(new DownloadWorker(this, connection, writer, PROCESS_ID));
 
     }
 
@@ -60,23 +59,5 @@ public class DownloadProcess {
             return requests.removeFirst();
         }
         return null;
-    }
-
-    public synchronized void addBlocksToQueue(List<FileBlockResult> blocksFromWorker, DownloadWorker worker) {
-        runningWorkers--;
-        workersBlocksReceived += String.format("Blocos recebido do peer %d: %d \n", worker.getConnection().getCorrespondentPort(), blocksFromWorker.size());
-
-        for(FileBlockResult block : blocksFromWorker){
-            blocks.add(block);
-        }
-
-        if(runningWorkers == 0) {
-            delieverFileData();
-        }
-    }
-
-    private void delieverFileData() {
-        manager.delieverFileData(blocks, fileMetadata, workersBlocksReceived + "Tempo de Download: " +
-                ((long)(startTime - System.currentTimeMillis())/1000)  + " segundos");
     }
 }

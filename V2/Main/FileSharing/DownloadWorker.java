@@ -12,16 +12,18 @@ import java.util.List;
 public class DownloadWorker extends Thread {
     private final DownloadProcess downloadProcess;
     private final OpenConnection connection;
+    private final FileWriter writer;
     private List<FileBlockResult> blocks;
     private final String PROCESS_ID;
     private boolean running = true;
 
-    public DownloadWorker(DownloadProcess downloadProcess, OpenConnection connection, String processId) {
+    public DownloadWorker(DownloadProcess downloadProcess, OpenConnection connection, FileWriter writer, String processId) {
         this.downloadProcess = downloadProcess;
         this.connection = connection;
         PROCESS_ID = processId;
-        this.blocks = new ArrayList<>();
+        this.writer = writer;
         connection.connectDownloadWorker(processId, this);
+
         start();
     }
 
@@ -35,7 +37,7 @@ public class DownloadWorker extends Thread {
             if(currentRequest != null) {
                 // Ask for block
                 connection.sendMessage(currentRequest);
-                System.out.println(String.format("Pedi o bloco %d ao %d", currentRequest.getBlockIndex(), connection.getCorrespondentPort()));
+                System.out.println(String.format("Pedi o bloco %d ao %d", currentRequest.getOffset(), connection.getCorrespondentPort()));
                    synchronized (this) {
                        try {
                            wait(); // Wait for the arrival of the block
@@ -46,7 +48,6 @@ public class DownloadWorker extends Thread {
             // If there are no blocks left to ask for
             } else {
                 running = false;
-                downloadProcess.addBlocksToQueue(blocks, this); //Entregar diretamente ao writer assim que recebe um bloco
             }
         }
     }
@@ -54,8 +55,9 @@ public class DownloadWorker extends Thread {
 
     // Called by the connection to submit the received block
     public synchronized void submitFileBlockResult(FileBlockResult fileBlockResult){
-        blocks.add(fileBlockResult); // Add block to the temporary list
-        System.out.println(String.format("Submitting file block result: %d", fileBlockResult.getIndex()));
+
+        writer.putBlock(fileBlockResult, this); // Add block to writer
+        System.out.println(String.format("Submitting file block result: %d", fileBlockResult.getOffset()));
         notifyAll(); // Notify its arrival
     }
 

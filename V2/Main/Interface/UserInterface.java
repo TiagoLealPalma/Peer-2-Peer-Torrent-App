@@ -104,31 +104,32 @@ public class UserInterface extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Gets the selected value from the JList
-                String selectedValue = resultList.getSelectedValue();
+                List<String> selectedValuesList = resultList.getSelectedValuesList();
 
-                if (selectedValue == null) {
+                if (selectedValuesList.isEmpty()) {
                     popUpMessage( "Por favor, selecione um item para descarregar.");
                     return;
                 }
+                for(String selectedValue: selectedValuesList) {
+                    // Extracts the file name from the selected value (removing the counter part if necessary)
+                    String fileName = selectedValue.split(" <")[0];
 
-                // Extracts the file name from the selected value (removing the counter part if necessary)
-                String fileName = selectedValue.split(" <")[0];
-
-                // Find the associated FileMetadata object
-                FileMetadata fileToDownload = null;
-                for (FileMetadata file : titles.keySet()) {
-                    if (file.getFileName().equals(fileName)) {
-                        fileToDownload = file;
-                        break;
+                    // Find the associated FileMetadata object
+                    FileMetadata fileToDownload = null;
+                    for (FileMetadata file : titles.keySet()) {
+                        if (file.getFileName().equals(fileName)) {
+                            fileToDownload = file;
+                            break;
+                        }
                     }
-                }
 
-                // Check if we found the FileMetadata object
-                if (fileToDownload != null) {
-                    // Pass the FileMetadata object to the coordinator to start the download
-                    coordinator.initiateDownload(fileToDownload);
-                } else {
-                    popUpMessage( "Erro: o item selecionado não foi encontrado.");
+                    // Check if we found the FileMetadata object
+                    if (fileToDownload != null) {
+                        // Pass the FileMetadata object to the coordinator to start the download
+                        coordinator.initiateDownload(fileToDownload);
+                    } else {
+                        popUpMessage("Erro: o item selecionado não foi encontrado.");
+                    }
                 }
             }
         });
@@ -212,12 +213,14 @@ public class UserInterface extends JFrame {
         for (FileMetadata file : list) {
            titles.merge(file, 1, Integer:: sum);
         }
+        System.out.println(titles.toString());
 
         // Prepare to display content
         toDisplay.clear();
         for (Map.Entry<FileMetadata, Integer> entry : titles.entrySet()) {
             toDisplay.add(entry.getKey().getFileName() + " <" + entry.getValue() + ">");
         }
+        System.out.println(toDisplay.toString());
 
         SwingUtilities.invokeLater(() -> {
             resultList.setListData(toDisplay.toArray(new String[0]));
