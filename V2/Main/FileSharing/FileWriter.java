@@ -36,6 +36,9 @@ public class FileWriter extends Thread{
         while(data.size() < blocksExpected) {
             try {
                 synchronized (this) {
+                    if(blocksExpected -2  == data.size()) {
+                        System.err.println("tou quase");
+                    }
                     wait();
                 }
             } catch (InterruptedException e) {
@@ -43,13 +46,14 @@ public class FileWriter extends Thread{
             }
         }
         writeFile();
-        Repo.getInstance().refreshRepo();
         displaySuccessMessage();
+        Repo.getInstance().refreshRepo();
+
     }
 
     public synchronized void putBlock(FileBlockResult block, DownloadWorker worker){
         workerData.put(worker, workerData.getOrDefault(worker, 0)+1);
-        System.out.println("Bloco adicionado " + block.getOffset());
+        System.out.println("("+fileMetadata.getFileName()+") Bloco adicionado " + data.size() + "/" + blocksExpected);
         data.add(block);
         notifyAll();
     }
@@ -90,6 +94,7 @@ public class FileWriter extends Thread{
             return false;
         }
         return true;
+
     }
 
 

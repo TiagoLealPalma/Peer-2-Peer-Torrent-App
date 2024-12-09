@@ -232,7 +232,7 @@ public class UserInterface extends JFrame {
             JOptionPane.showMessageDialog(this,message);
         });
     }
-    public void showDownloadInfo() {
+    public synchronized void showDownloadInfo() {
         popUpMessage("Download efeituado com sucesso :P");
     }
 

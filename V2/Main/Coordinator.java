@@ -31,7 +31,6 @@ public class Coordinator {
     // a request is flooded across all connected peers
     public void initiateDownload(FileMetadata fileToDownload) {
         // Create the request so the UUID is generated
-
         String processId = FileTransferManager.getInstance().startDownloadProcess(fileToDownload);
         ConnectionManager.getInstance().prepareSeeders(processId, fileToDownload);
     }
@@ -44,8 +43,7 @@ public class Coordinator {
         if(blocks.isEmpty()) return null; // File isn't present in repo
 
         // Send confirmation to the requesting peer and start an upload process
-        UploadProcess process = FileTransferManager.getInstance().startUploadProcess(blocks, connectionWithDownloadingPeer, request.getId());
-        return process;
+        return FileTransferManager.getInstance().startUploadProcess(blocks, connectionWithDownloadingPeer, request.getId());
     }
 
 

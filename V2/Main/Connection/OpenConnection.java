@@ -59,7 +59,7 @@ public class OpenConnection extends Thread{
     @Override
     public void run() {
         try {
-            sendWordSearchRequest(new WordSearchRequest(UserInterface.getInstance().getKeyword()));
+            sendMessage(new WordSearchRequest(UserInterface.getInstance().getKeyword()));
             while (running) {
                 try {
 
@@ -140,7 +140,7 @@ public class OpenConnection extends Thread{
     }
 
 
-    /* --------------------------------------------- Handle Messages ------------------------------------------------ */
+    /* ------------------------------------------------ Handlers ---------------------------------------------------- */
 
     private void handleNewConnectionRequest(NewConnectionRequest newConnectionRequest) {
         connectionManager.addNewConceptualConnection(this);
@@ -182,17 +182,6 @@ public class OpenConnection extends Thread{
     }
 
     /* ---------------------------------------------- Send Message -------------------------------------------------- */
-
-    // Sends Word Search Request based on the keyWord value on the connection manager
-    public void sendWordSearchRequest(WordSearchRequest wordSearchRequest) {
-        try {
-            System.out.println("(" + homePort + ") A enviar pedido de pesquisa por '" + connectionManager.getKeyWord() + "'");
-            out.writeObject(wordSearchRequest);
-            out.flush();
-
-        } catch (IOException e) {System.out.println("(" + homePort + ") Error occurred while sending word search request to correspondentPort: " + correspondentPort);}
-    }
-
 
     public synchronized void sendMessage(Serializable message){
         try{
