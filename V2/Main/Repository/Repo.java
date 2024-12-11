@@ -38,31 +38,8 @@ public class Repo {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) { throw new RuntimeException(e);}
 
-        File[] files = directory.listFiles();
-        for(final File file : files){
-            try {
-                digest.reset();
-                byte[] buffer = new byte[BLOCKSIZE];
-                int bytesRead = 0;
-                int numOfBytes = 0;
-                FileInputStream fis = new FileInputStream(file);
-
-                while((bytesRead = fis.read(buffer)) != -1){
-                    digest.update(buffer, 0, bytesRead);
-                    numOfBytes+=bytesRead;
-                }
-                fis.close();
-                byte[] hash = digest.digest();
-                fileMetadataList.add(new FileMetadata(file.getName(), hash, numOfBytes));
-
-            } catch (FileNotFoundException e) {
-                System.out.println("File was not found.");
-                e.printStackTrace();
-            } catch (IOException e) {
-                System.out.println("Error occured while building repo.");
-                e.printStackTrace();
-            }
-        }
+        // Build List and FileMetaData for each file present in repository
+        refreshRepo();
     }
 
     public static synchronized Repo getInstance(String filePath) {
@@ -89,22 +66,33 @@ public class Repo {
                 digest.reset();
                 byte[] buffer = new byte[BLOCKSIZE];
                 int bytesRead = 0;
-                int numOfBlocks = 0;
+                int numOfBytes = 0;
                 FileInputStream fis = new FileInputStream(file);
 
                 while((bytesRead = fis.read(buffer)) != -1){
                     digest.update(buffer, 0, bytesRead);
-                    numOfBlocks++;
+                    numOfBytes+=bytesRead;
                 }
                 fis.close();
                 byte[] hash = digest.digest();
-                fileMetadataList.add(new FileMetadata(file.getName(), hash, numOfBlocks));
+
+                // Check if its already present on the list
+                boolean alreadyExists = false;
+                for (FileMetadata fileMetadata : fileMetadataList) {
+                    if(java.util.Arrays.equals(fileMetadata.getHash(), hash)){
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+
+                if(!alreadyExists)
+                    fileMetadataList.add(new FileMetadata(file.getName(), hash, numOfBytes));
 
             } catch (FileNotFoundException e) {
-                System.out.println("File was not found.");
+                System.err.println("File was not found.");
                 e.printStackTrace();
             } catch (IOException e) {
-                System.out.println("Error occured while building repo.");
+                System.err.println("Error occured while building repo.");
                 e.printStackTrace();
             }
         }

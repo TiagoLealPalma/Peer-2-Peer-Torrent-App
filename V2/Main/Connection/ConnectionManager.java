@@ -21,8 +21,8 @@ public class ConnectionManager {
     private final int PORT;
     private Server server;
     private String keyWord = "";
-    private Map<Integer, OpenConnection> openConnections = new HashMap();
-    private HashMap<FileMetadata, ArrayList<OpenConnection>> filesAvailable = new HashMap<>();
+    private final Map<Integer, OpenConnection> openConnections = new HashMap<>();
+    private final HashMap<FileMetadata, ArrayList<OpenConnection>> filesAvailable = new HashMap<>();
     private static ConnectionManager instance;
 
 
@@ -64,11 +64,7 @@ public class ConnectionManager {
     }
 
     public synchronized void addNewConceptualConnection(OpenConnection connection){
-        if(!openConnections.values().contains(connection.getCorrespondentPort())) {
-            System.out.println("Recebido new connection request from port: " + connection.getCorrespondentPort());
-            //openConnections.put(connection.getCorrespondentPort(), connection); DESCOMENTAR CASO NÃO HAJA CEDENCIA
-        }
-
+        openConnections.put(connection.getCorrespondentPort(), connection);
     }
 
 
@@ -77,9 +73,7 @@ public class ConnectionManager {
     // Requests a connection for a client socket and saves it in the openConnections HashMap
     // Outcome Handling: 10 (Non-Valid Connection); 20 (Success); 30 (Connection failed);
     public synchronized int requestConnection(String address, int port) {
-        UserInterface gui = UserInterface.getInstance();
         int maxTries = 5;
-        boolean connected = false;
 
         // Corner Cases
         if(openConnections.containsKey(port)) return 11;  // Connection already established
@@ -92,16 +86,12 @@ public class ConnectionManager {
 
             if (connection.connectToPeer()){
                 connection.start();
-                addConnection(connection);
                 return 20;
             }
         }
         return 30;
     }
 
-    public void addConnection(OpenConnection connection) {
-        openConnections.put(connection.getCorrespondentPort(), connection);
-    }
 
     public synchronized void removeConnection(int port) {
         if(openConnections.containsKey(port)) {
@@ -118,7 +108,7 @@ public class ConnectionManager {
 
     /*--------------------------------------------------- Tunneling -----------------------------------------------------*/
 
-    public void receiveFileSearch(List<FileMetadata> list, OpenConnection connection) {
+    public synchronized void receiveFileSearch(List<FileMetadata> list, OpenConnection connection) {
         // Guardar os ficheiros e os peer que os disponibilizam em memoria
         for(FileMetadata file : list) {
             if(!filesAvailable.containsKey(file)) {filesAvailable.put(file, new ArrayList<>());}

@@ -73,8 +73,7 @@ public class UserInterface extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                titles.clear();
-                ConnectionManager.getInstance().floodMessage(new WordSearchRequest(searchField.getText()));
+                searchKeyword();
             }
         });
 
@@ -205,6 +204,17 @@ public class UserInterface extends JFrame {
         });
 
         dialog.setVisible(true);
+    }
+
+
+    // Perform keyword search across all peers
+    public void searchKeyword() {
+        titles.clear();
+        toDisplay.clear();
+        SwingUtilities.invokeLater(() -> {
+            resultList.setListData(toDisplay.toArray(new String[0]));
+        });
+        ConnectionManager.getInstance().floodMessage(new WordSearchRequest(searchField.getText()));
     }
 
     // Filter is applied client side, no need to request info based on a filter

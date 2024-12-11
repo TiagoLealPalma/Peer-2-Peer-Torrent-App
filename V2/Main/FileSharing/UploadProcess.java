@@ -13,6 +13,7 @@ public class UploadProcess implements Runnable{
     private final String PROCESS_ID;
     private final FileTransferManager manager;
     private final OpenConnection connection;
+    private boolean running = true;
 
     public UploadProcess(OpenConnection connection, String processID,
                          FileTransferManager manager, List<FileBlockResult> blocks) {
@@ -30,7 +31,8 @@ public class UploadProcess implements Runnable{
 
     @Override
     public void run() {
-        while(!blocks.isEmpty()){
+        while(running){
+            // Wait for requests
             while(requestBuffer.isEmpty()){
                 synchronized (this){
                     try {
@@ -38,15 +40,29 @@ public class UploadProcess implements Runnable{
                     } catch (InterruptedException e) {System.out.println("Processo " + PROCESS_ID + " interrupted");}
                 }
             }
-            FileBlockRequest request = requestBuffer.removeFirst();
-            FileBlockResult result = null;
 
-            for (FileBlockResult block : blocks) {
-                if(block.equals(request)) result = block;
+            // Handle requests
+            FileBlockRequest request = requestBuffer.removeFirst();
+
+            // If process is not finished and request is valid
+            if(request.getOffset() != -1) {
+                FileBlockResult result = null;
+
+                // Search for corresponding block
+                for (FileBlockResult block : blocks) {
+                    if (block.equals(request)) result = block;
+                }
+
+                // Check if found
+                if (result != null)
+                    connection.sendMessage(result);
+                else
+                    System.err.println("Erro occurreu a tentar enviar o bloco com offset " + request.getOffset());
+
+            // Process is finished
+            }else{
+                running = false;
             }
-            if(result == null) System.err.println("Erro occurreu a tentar enviar o bloco com offset " + request.getOffset());
-            // If not, send the block response normally
-            connection.sendMessage(result);
         }
     }
 

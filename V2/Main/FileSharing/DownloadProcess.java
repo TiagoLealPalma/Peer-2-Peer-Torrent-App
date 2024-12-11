@@ -48,16 +48,15 @@ public class DownloadProcess {
     }
 
     public void addWorker(OpenConnection connection) {
-        runningWorkers++;
         workers.add(new DownloadWorker(this, connection, writer, PROCESS_ID));
-
     }
 
-    // Workers get the index number of the next block they will ask for
+    // Workers get the next block they will ask for or if there are no blocks left, return a block signaling end of process
     public synchronized FileBlockRequest getNextRequest(){
-        if(!requests.isEmpty()){
-            return requests.removeFirst();
-        }
-        return null;
+        return requests.isEmpty()? new FileBlockRequest(PROCESS_ID, fileMetadata, -1, -1, -1) : requests.removeFirst();
+    }
+
+    public synchronized void returnFailedRequest(FileBlockRequest request){
+        requests.add(request);
     }
 }

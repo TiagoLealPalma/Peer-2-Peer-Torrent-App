@@ -40,8 +40,6 @@ public class FileTransferManager {
     }
 
 
-
-
     // Start a new Download Process
     public String startDownloadProcess(FileMetadata fileToDownload) {
         String processId = UUID.randomUUID().toString();
@@ -51,7 +49,7 @@ public class FileTransferManager {
     }
 
     // Start a new upload task and manage it with the thread pool
-    public UploadProcess startUploadProcess(List<FileBlockResult> blocks,
+    public synchronized UploadProcess startUploadProcess(List<FileBlockResult> blocks,
                                                 OpenConnection connectionWithDownloadingPeer, String processID) {
         UploadProcess task = new UploadProcess(connectionWithDownloadingPeer, processID, this, blocks);
         executor.submit(task);
