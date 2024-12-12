@@ -13,7 +13,6 @@ public class DownloadWorker extends Thread {
     private final DownloadProcess downloadProcess;
     private final OpenConnection connection;
     private final FileWriter writer;
-    private List<FileBlockResult> blocks;
     private final String PROCESS_ID;
     private boolean waitingForResponse = false;
     private boolean running = true;
@@ -37,7 +36,6 @@ public class DownloadWorker extends Thread {
                 // Send request and set waiting flag
                 waitingForResponse = true;
                 connection.sendMessage(currentRequest);
-                System.out.println(String.format("Pedi o bloco %d ao %d", currentRequest.getOffset(), connection.getCorrespondentPort()));
 
                     // Wait for block
                    synchronized (this) {
@@ -67,19 +65,22 @@ public class DownloadWorker extends Thread {
     public synchronized void submitFileBlockResult(FileBlockResult fileBlockResult){
         waitingForResponse = false;
         writer.putBlock(fileBlockResult, this); // Add block to writer
-        System.out.println(String.format("Submitting file block result: %d", fileBlockResult.getOffset()));
         notifyAll(); // Notify its arrival
     }
 
+    // Handles the block not being received
     private void handleRequestTimeout(FileBlockRequest currentRequest) {
         downloadProcess.returnFailedRequest(currentRequest);
-        System.err.println(String.format("Request (Block %d) timed out after 5 second wait", currentRequest.getOffset()));
+        connection.consoleLog(String.format("Request (Block %d) timed out after 5 second wait", currentRequest.getOffset()));
         waitingForResponse = false;
     }
-
-
 
     public OpenConnection getConnection() {
         return connection;
     }
 }
+
+
+
+//System.out.println(String.format("Pedi o bloco %d ao %d", currentRequest.getOffset(), connection.getCorrespondentPort()));
+//System.out.println(String.format("Submitting file block result: %d", fileBlockResult.getOffset()));

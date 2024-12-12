@@ -27,10 +27,7 @@ public class Server extends Thread{
             while (running) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    System.out.println("(" + connectionManager.getPORT() + ") Client " + clientSocket.getPort() + " connected");
-
                     connectionManager.createConnection(clientSocket);
-
 
                 } catch (IOException e) {
                     System.out.println("(" + connectionManager.getPORT() + ") Error accepting client connection");

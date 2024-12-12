@@ -1,15 +1,9 @@
 package V2.Main.Connection;
 
-import V2.Auxiliary.DownloadRelated.FileBlockRequest;
-import V2.Auxiliary.SearchRelated.WordSearchRequest;
 import V2.Auxiliary.Structs.FileMetadata;
-import V2.Main.Coordinator;
 import V2.Main.FileSharing.FileTransferManager;
-import V2.Main.FileSharing.UploadProcess;
 import V2.Main.Interface.UserInterface;
-
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;

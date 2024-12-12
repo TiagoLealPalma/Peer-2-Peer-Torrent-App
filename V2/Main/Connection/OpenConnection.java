@@ -83,9 +83,7 @@ public class OpenConnection extends Thread{
                     consoleLog("Message type not recognized.");
                 } catch (IOException e) {
                     consoleLog("Connection lost with peer.");
-                    connectionManager.removeConnection(correspondentPort);
-                    UserInterface.getInstance().searchKeyword();
-                    running = false;
+                    stopRunning();
                 }
             }
         } finally { // Assures all resources used are cleaned before stepping out of the method
@@ -102,7 +100,7 @@ public class OpenConnection extends Thread{
 
             // Handles all possible exceptions
         } catch (IOException e) {
-            consoleLog(" Error occurred while setting up communications streams. ");
+            consoleLogError("Unable to connect to peer");
             return false;
         }
     }
@@ -113,24 +111,24 @@ public class OpenConnection extends Thread{
             out.flush();
             in = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
-            consoleLog("Failed to connect or set up streams: " + e.getMessage());
+            consoleLogError("Streams could not be opened.");
             return false;
         }
         return true;
     }
 
     public void stopRunning(){
-        consoleLog("Stopping connection thread.");
         running = false;
         closeConnection();
         connectionManager.removeConnection(correspondentPort);
+        UserInterface.getInstance().searchKeyword(); // Updates the client search list, so only the available files are shown
     }
 
     public void closeConnection() {
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
-                consoleLog(" Connection with closed");
+                consoleLog(" Connection closed");
             }
         } catch (IOException e) {
             consoleLog(" Failed to close socket.");
@@ -195,8 +193,12 @@ public class OpenConnection extends Thread{
             downloadWorkers.put(processID, downloadWorker);
     }
 
-    private void consoleLog(String s) {
+    public void consoleLog(String s) {
         System.out.println(String.format("(%d ---> %d): %s", homePort, correspondentPort, s));
+    }
+
+    public void consoleLogError(String s) {
+        System.out.println(String.format("(%d): %s", homePort, s));
     }
 }
 

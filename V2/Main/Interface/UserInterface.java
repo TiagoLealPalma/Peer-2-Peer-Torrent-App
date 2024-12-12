@@ -158,7 +158,7 @@ public class UserInterface extends JFrame {
         JButton okButton = new JButton("Ok");
         dialog.add(cancelButton);
         dialog.add(okButton);
-        dialog.setLocationRelativeTo(null);
+        dialog.setLocationRelativeTo(this);
 
 
         // Action Listeners
@@ -223,14 +223,12 @@ public class UserInterface extends JFrame {
         for (FileMetadata file : list) {
            titles.merge(file, 1, Integer:: sum);
         }
-        System.out.println(titles.toString());
 
         // Prepare to display content
         toDisplay.clear();
         for (Map.Entry<FileMetadata, Integer> entry : titles.entrySet()) {
             toDisplay.add(entry.getKey().getFileName() + " <" + entry.getValue() + ">");
         }
-        System.out.println(toDisplay.toString());
 
         SwingUtilities.invokeLater(() -> {
             resultList.setListData(toDisplay.toArray(new String[0]));
@@ -241,9 +239,6 @@ public class UserInterface extends JFrame {
         SwingUtilities.invokeLater(() -> {
             JOptionPane.showMessageDialog(this,message);
         });
-    }
-    public synchronized void showDownloadInfo() {
-        popUpMessage("Download efeituado com sucesso :P");
     }
 
     public String getKeyword() {

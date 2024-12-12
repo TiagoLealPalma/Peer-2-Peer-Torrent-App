@@ -67,4 +67,7 @@ public class FileTransferManager {
         openDownloadProcesses.get(processId).addWorker(connection);
     }
 
+    public void cleanUp(String process) {
+        openDownloadProcesses.remove(process);
+    }
 }

@@ -36,9 +36,6 @@ public class FileWriter extends Thread{
         while(data.size() < blocksExpected) {
             try {
                 synchronized (this) {
-                    if(blocksExpected -2  == data.size()) {
-                        System.err.println("tou quase");
-                    }
                     wait();
                 }
             } catch (InterruptedException e) {
@@ -47,13 +44,13 @@ public class FileWriter extends Thread{
         }
         writeFile();
         displaySuccessMessage();
+        FileTransferManager.getInstance().cleanUp(download.PROCESS_ID);
         Repo.getInstance().refreshRepo();
 
     }
 
     public synchronized void putBlock(FileBlockResult block, DownloadWorker worker){
         workerData.put(worker, workerData.getOrDefault(worker, 0)+1);
-        System.out.println("("+fileMetadata.getFileName()+") Bloco adicionado " + data.size() + "/" + blocksExpected);
         data.add(block);
         notifyAll();
     }
@@ -63,7 +60,6 @@ public class FileWriter extends Thread{
     public boolean writeFile() {
         try {
             // Make sure the file is written even if it's a duplicate by adding, for exemple, (1) after
-            System.out.println("Vou começar a escrever");
             String originalPath = directory.getAbsolutePath() + "/" + fileMetadata.getFileName();
             File file = new File(originalPath);
             String path = originalPath;
@@ -85,7 +81,6 @@ public class FileWriter extends Thread{
             FileOutputStream fos = new FileOutputStream(path);
             while(!data.isEmpty()) {
                 FileBlockResult block = data.poll();
-                System.out.println(block.getOffset());
                 fos.write(block.getBlock());
             }
             System.out.println("File ("+fileMetadata.getFileName()+") written successfully.");
@@ -108,3 +103,11 @@ public class FileWriter extends Thread{
     }
 
 }
+
+
+/* System.out.println("("+fileMetadata.getFileName()+") Bloco adicionado " + data.size() + "/" + blocksExpected);
+System.out.println(block.getOffset());
+System.out.println("Vou começar a escrever");
+
+
+ */

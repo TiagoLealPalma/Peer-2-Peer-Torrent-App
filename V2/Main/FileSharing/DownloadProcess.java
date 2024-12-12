@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 public class DownloadProcess {
-    private final String PROCESS_ID;
+    public final String PROCESS_ID;
     private final FileTransferManager manager;
     private final FileMetadata fileMetadata;
     private List<DownloadWorker> workers;
@@ -59,4 +59,5 @@ public class DownloadProcess {
     public synchronized void returnFailedRequest(FileBlockRequest request){
         requests.add(request);
     }
+
 }

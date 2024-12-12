@@ -21,11 +21,15 @@ public class Repo {
     public Repo(String repoName) {
         directory = new File("./" + repoName);
 
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) { throw new RuntimeException(e);}
+
         // Corner cases
         if(!directory.exists()){
             directory.mkdir();
             System.out.println("Foi criada um novo pasta para disponibilizar ficheiros: " + directory.getAbsolutePath() +
-                    "\n Coloque os ficheiros que pretende disponibilizar e atualize o repositório");
+                    "\nColoque os ficheiros que pretende disponibilizar e atualize o repositório");
             return;
         }
         if(!directory.isDirectory()){
@@ -33,10 +37,6 @@ public class Repo {
                     "\n Reinicie a aplicação e insira um caminho válido.");
             return;
         }
-
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) { throw new RuntimeException(e);}
 
         // Build List and FileMetaData for each file present in repository
         refreshRepo();
@@ -103,7 +103,10 @@ public class Repo {
         if(fileMetadataList.isEmpty()) return list; // In case directory is empty just return empty list
 
         for (FileMetadata file : fileMetadataList) {
-            if(!file.getFileName().equalsIgnoreCase(".ds_store") && file.getFileName().toLowerCase().contains(keyWord.toLowerCase()))
+            if(!file.getFileName().equalsIgnoreCase(".ds_store")
+                    && !file.getFileName().equalsIgnoreCase(".gitignore")
+                    && file.getFileName().toLowerCase().contains(keyWord.toLowerCase())
+            )
                 list.add(file);
         }
         return list;
@@ -115,22 +118,23 @@ public class Repo {
 
         File fileToDivide = directory.listFiles()[index];
         List<FileBlockResult> results = new ArrayList<>();
+
+        // Calculate list of blocks
         try {
             FileInputStream fis = new FileInputStream(fileToDivide);
 
-        int totalBytesRead = 0;
-        byte[] buffer = new byte[preferredBlockSize];
-        int bytesRead = 0;
+            int totalBytesRead = 0; // Sets the offset value for a block
+            byte[] buffer = new byte[preferredBlockSize]; // Preferred size of the block in a download
+            int bytesRead = 0; // Bytes read per iteration, added to offset in the end of iteration
 
-            System.out.println(file.getLength());
-        while((bytesRead = fis.read(buffer)) != -1){
-            byte[] blockData = new byte[bytesRead]; // Create a new array for the block
-            System.arraycopy(buffer, 0, blockData, 0, bytesRead); // Copy the data
-            results.add(new FileBlockResult(blockData, totalBytesRead));
-            System.out.println("Block " + totalBytesRead + ": bytesRead = " + bytesRead);
-            totalBytesRead+=bytesRead;
+            while((bytesRead = fis.read(buffer)) != -1){
+                byte[] blockData = new byte[bytesRead]; // Create a new array for the block
+                System.arraycopy(buffer, 0, blockData, 0, bytesRead); // Copy the data
+                results.add(new FileBlockResult(blockData, totalBytesRead));
+                System.out.println("Block " + totalBytesRead + ": bytesRead = " + bytesRead);
+                totalBytesRead+=bytesRead;
 
-        }
+            }
 
         } catch (FileNotFoundException e) {
             System.out.println("File was not found.");
@@ -139,16 +143,11 @@ public class Repo {
             System.out.println("Error occurred trying to read file");
             return null;
         }
+
         return results;
     }
 
-    public static void main(String[] args) {
-        Repo repo = new Repo("dll2");
-        ArrayList<FileMetadata> searchContent = repo.wordSearchResponse("");
-
-        FileMetadata f = searchContent.get(0);
-        //repo.writeFile(repo.calculateFileBlocks(searchContent.get(0)),f);
-
-    }
 }
 
+// System.out.println(file.getLength());
+//repo.writeFile(repo.calculateFileBlocks(searchContent.get(0)),f);
