@@ -5,17 +5,14 @@ import V2.Auxiliary.DownloadRelated.FileBlockResult;
 import V2.Auxiliary.SearchRelated.FileSearchResult;
 import V2.Auxiliary.ConnectionRelated.NewConnectionRequest;
 import V2.Auxiliary.SearchRelated.WordSearchRequest;
-import V2.Auxiliary.Structs.FileMetadata;
 import V2.Main.Coordinator;
 import V2.Main.FileSharing.DownloadWorker;
 import V2.Main.FileSharing.UploadProcess;
 import V2.Main.Interface.UserInterface;
-import V2.Main.Repository.Repo;
 
 import java.io.*;
 import java.net.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OpenConnection extends Thread{
@@ -60,7 +57,7 @@ public class OpenConnection extends Thread{
     public void run() {
         try {
             sendMessage(new NewConnectionRequest(connectionManager.getPORT()));
-            sendMessage(new WordSearchRequest(UserInterface.getInstance().getKeyword()));
+            //sendMessage(new WordSearchRequest(UserInterface.getInstance().getKeyword()));
             while (running) {
                 try {
 
@@ -145,17 +142,18 @@ public class OpenConnection extends Thread{
 
 
     private void handleWordSearchRequest(WordSearchRequest wordSearchRequest) {
-        FileSearchResult result = new FileSearchResult(
-                Repo.getInstance().wordSearchResponse(wordSearchRequest.getKeyWord()), wordSearchRequest);
-        sendMessage(result);
+        connectionManager.propagateWordSearchRequest(wordSearchRequest);
     }
 
 
     private void handleFileSearchResult(FileSearchResult fileSearchResult) {
-        List<FileMetadata> result = fileSearchResult.getList();
-        if(result.isEmpty()) return;
+        // If this is root node retrieve searches
+        if (fileSearchResult.isRootNode())
+            connectionManager.retrieveSearches(fileSearchResult);
+        else // If not propagate backwards according to the path
+            connectionManager.deliverSearchToRootNode(fileSearchResult);
 
-        connectionManager.receiveFileSearch(fileSearchResult.getList(), this);
+
     }
 
     private void handleFileBlockRequest(FileBlockRequest fileBlockRequest) {

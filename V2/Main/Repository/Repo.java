@@ -148,6 +148,3 @@ public class Repo {
     }
 
 }
-
-// System.out.println(file.getLength());
-//repo.writeFile(repo.calculateFileBlocks(searchContent.get(0)),f);

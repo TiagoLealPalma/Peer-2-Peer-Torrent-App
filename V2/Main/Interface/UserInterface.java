@@ -110,12 +110,12 @@ public class UserInterface extends JFrame {
                     return;
                 }
                 for(String selectedValue: selectedValuesList) {
-                    // Extracts the file name from the selected value (removing the counter part if necessary)
+                    // Extracts the file name from the selected value (removing the counterpart if necessary)
                     String fileName = selectedValue.split(" <")[0];
 
                     // Find the associated FileMetadata object
                     FileMetadata fileToDownload = null;
-                    for (FileMetadata file : titles.keySet()) {
+                    for (FileMetadata file : ConnectionManager.getInstance().getFilesAvailable().keySet()) {
                         if (file.getFileName().equals(fileName)) {
                             fileToDownload = file;
                             break;
@@ -209,25 +209,21 @@ public class UserInterface extends JFrame {
 
     // Perform keyword search across all peers
     public void searchKeyword() {
-        titles.clear();
+        ConnectionManager.getInstance().clearFilesAvailable();
         toDisplay.clear();
         SwingUtilities.invokeLater(() -> {
             resultList.setListData(toDisplay.toArray(new String[0]));
         });
-        ConnectionManager.getInstance().floodMessage(new WordSearchRequest(searchField.getText()));
+        ConnectionManager.getInstance().initiateWordSearchMessage();
     }
 
     // Filter is applied client side, no need to request info based on a filter
-    public void addContentToSearchList(List<FileMetadata> list) {
-        // Merges the new list with the existing map
-        for (FileMetadata file : list) {
-           titles.merge(file, 1, Integer:: sum);
-        }
+    public void addContentToSearchList() {
 
         // Prepare to display content
         toDisplay.clear();
-        for (Map.Entry<FileMetadata, Integer> entry : titles.entrySet()) {
-            toDisplay.add(entry.getKey().getFileName() + " <" + entry.getValue() + ">");
+        for (Map.Entry<FileMetadata, ArrayList<Integer>> entry : ConnectionManager.getInstance().getFilesAvailable().entrySet()) {
+            toDisplay.add(entry.getKey().getFileName() + " <" + entry.getValue().size() + ">");
         }
 
         SwingUtilities.invokeLater(() -> {
