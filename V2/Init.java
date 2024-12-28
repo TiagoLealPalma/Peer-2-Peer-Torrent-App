@@ -7,20 +7,14 @@ import V2.Main.Interface.UserInterface;
 import V2.Main.Repository.Repo;
 
 public class Init {
-    public Init(int id, String filePath) {
+    public Init(int port, String filePath) {
 
-
-
-
-
-        if(id<0) throw new IllegalArgumentException();
+        if(port<8080) throw new IllegalArgumentException();
 
         Coordinator controller = Coordinator.getInstance();
-        ConnectionManager cm = ConnectionManager.getInstance(8080+id);
+        ConnectionManager cm = ConnectionManager.getInstance(port);
         FileTransferManager ftm = FileTransferManager.getInstance(5);
         Repo repo = Repo.getInstance(filePath);
         UserInterface ui = UserInterface.getInstance();
     }
-
-
 }

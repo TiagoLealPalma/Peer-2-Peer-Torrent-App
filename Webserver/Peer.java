@@ -25,6 +25,6 @@ public class Peer {
 
     @Override
     public String toString() {
-        return "Peer{" + "ip='" + ip + '\'' + ", port=" + port + '}';
+        return ip + ':' + port;
     }
 }

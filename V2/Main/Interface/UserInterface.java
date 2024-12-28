@@ -67,7 +67,7 @@ public class UserInterface extends JFrame {
 
         // Actions
 
-        // Search button action listener - Gets the key word and passes it to the coordinator so it can run the
+        // Search button action listener - Gets the key word and passes it to the coordinator, so it can run the
         // search across all the peers
         searchButton.addActionListener(new ActionListener() {
 
@@ -83,7 +83,8 @@ public class UserInterface extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    openConnectPortWindow();
+                    // Send GET to webserver in order to receive all online peers
+                    openConnectPortWindow(ConnectionManager.getInstance().getRegistedPeers().toArray(new String[0]));
                 } catch (UnknownHostException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -144,22 +145,44 @@ public class UserInterface extends JFrame {
         return instance;
     }
 
-    private void openConnectPortWindow() throws UnknownHostException {
+    private void openConnectPortWindow(String[] peers) throws UnknownHostException {
         JDialog dialog = new JDialog(this, "Adicionar Nó", true);
-        dialog.setSize(550, 60);
-        dialog.setLayout(new GridLayout(1, 6));
-        dialog.add(new JLabel("Endereço:", JLabel.CENTER));
-        JTextField address = new JTextField(InetAddress.getByName(null).getHostAddress());
-        dialog.add(address);
-        dialog.add(new JLabel("Porta:", JLabel.CENTER));
-        JTextField port = new JTextField();
-        dialog.add(port);
-        JButton cancelButton = new JButton("Cancelar");
-        JButton okButton = new JButton("Ok");
-        dialog.add(cancelButton);
-        dialog.add(okButton);
+        dialog.setSize(550, 360);
+        dialog.setLayout(new BorderLayout());
         dialog.setLocationRelativeTo(this);
 
+        // Bottom box stuff
+        JPanel bottomBox = new JPanel(new GridLayout(1, 6));
+        bottomBox.add(new JLabel("Endereço:", JLabel.CENTER));
+        JTextField address = new JTextField(InetAddress.getByName(null).getHostAddress());
+        bottomBox.add(address);
+        bottomBox.add(new JLabel("Porta:", JLabel.CENTER));
+        JTextField port = new JTextField();
+        bottomBox.add(port);
+        JButton cancelButton = new JButton("Cancelar");
+        JButton okButton = new JButton("Ok");
+        bottomBox.add(cancelButton);
+        bottomBox.add(okButton);
+
+        // Top List
+        JList<String> list = new JList<>(peers);
+
+        // Adds listener to update address and port when an item is clicked
+        list.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) { // Avoids duplicate events
+                String selectedPeer = list.getSelectedValue();
+                if (selectedPeer != null && selectedPeer.contains(":")) {
+                    String[] parts = selectedPeer.split(":");
+                    address.setText(parts[0]); // Updates address field
+                    port.setText(parts[1]); // Updates port field
+                }
+            }
+        });
+
+        // Adds
+        dialog.add(new JScrollPane(list), BorderLayout.CENTER);
+        dialog.add(bottomBox, BorderLayout.SOUTH);
+        dialog.pack();
 
         // Action Listeners
         okButton.addActionListener(new ActionListener() {
@@ -195,13 +218,7 @@ public class UserInterface extends JFrame {
             }
         });
 
-        cancelButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dialog.dispose();
-            }
-        });
+        cancelButton.addActionListener(e-> dialog.dispose());
 
         dialog.setVisible(true);
     }
