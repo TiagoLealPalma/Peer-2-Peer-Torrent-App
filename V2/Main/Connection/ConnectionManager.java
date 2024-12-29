@@ -204,7 +204,7 @@ public class ConnectionManager {
 
         // Try to open a connection for a maximum of 4 retries
         while (maxTries-- > 0) {
-            OpenConnection connection = new OpenConnection(this, port);
+            OpenConnection connection = new OpenConnection(this, port, address);
 
             if (connection.connectToPeer()){
                 connection.start();
@@ -239,7 +239,7 @@ public class ConnectionManager {
             System.err.println("ERROR: Word search request could not be determined.");
             return;
         }
-        if(wsr.getPath().contains(PORT) || wsr.getConnectionsAsked().contains(PORT)) return; // Cuts loops (Similar to BGP)
+       // if(wsr.getPath().contains(PORT) || wsr.getConnectionsAsked().contains(PORT)) return; // Cuts loops (Similar to BGP)
 
         // Check which connections have already been asked
         List<Integer> connectionsToSend = openConnections.keySet().stream()

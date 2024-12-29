@@ -32,8 +32,8 @@ public class OpenConnection extends Thread{
     private volatile boolean running = true;
 
     // To open new connections
-    public OpenConnection(ConnectionManager connectionManager, int correspondentPort) {
-        this.address = "127.0.0.1";
+    public OpenConnection(ConnectionManager connectionManager, int correspondentPort, String destAddress) {
+        this.address = destAddress;
         this.correspondentPort = correspondentPort;
         this.homePort = connectionManager.getPORT();
         this.addressPort = address+":"+ this.correspondentPort;
@@ -42,7 +42,7 @@ public class OpenConnection extends Thread{
 
     // To handle the sockets accepted by the server
     public OpenConnection(ConnectionManager connectionManager, Socket socket) {
-        this.address = "127.0.0.1";
+        this.address = socket.getInetAddress().getHostAddress();
         this.socket = socket;
         this.correspondentPort = socket.getPort();
         this.homePort = connectionManager.getPORT();
