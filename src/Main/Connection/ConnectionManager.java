@@ -29,8 +29,8 @@ public class ConnectionManager {
     private final String SESSION_ID;
 
     // Universal Plug n Play
-    private String LOCAL_ADDRESS = "";
-    private final int PORT; // External port (mapped through NAT)
+    public String LOCAL_ADDRESS = "";
+    public final int PORT = 42069; // External port (mapped through NAT)
     private static final String DESCRIPTION = "My Torrent Application";
 
 
@@ -39,7 +39,6 @@ public class ConnectionManager {
         SESSION_ID = UUID.randomUUID().toString();
 
         // Get public ip need to get the public IP (STUN or Relay Server)
-        this.PORT = port;
         InetAddress localHost = null;
         try {
             localHost = InetAddress.getLocalHost();
@@ -238,7 +237,7 @@ public class ConnectionManager {
 
         // Corner Cases
         if(openConnections.containsKey(port)) return 11;  // Connection already established
-        if(port == PORT)                      return 12;  // Trying to connect with itself
+        if(port == PORT && address.equals(LOCAL_ADDRESS))                      return 12;  // Trying to connect with itself
         if(port < 8080 || port > 65535)       return 13;  // Trying to connect with non-permitted ports
 
         // Try to open a connection for a maximum of 4 retries
