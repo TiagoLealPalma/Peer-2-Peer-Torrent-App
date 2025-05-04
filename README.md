@@ -1,25 +1,53 @@
-**📦 Peer-to-Peer Torrent App**
-	Peer-to-Peer Torrent App is a decentralized file-sharing system built in Java, inspired by BitTorrent. It allows users to share and download files directly between peers without relying on centralized servers or trackers. Designed for reliability and extensibility, 				this application demonstrates core P2P principles including peer discovery, distributed file availability, and NAT traversal.
+# Peer-to-Peer Torrent App
 
-**🧠 Architecture Overview**
-	The application follows a modular peer-to-peer architecture:
-		Peers act as both clients and servers, capable of sharing their own files and downloading from others.
-		Files are split into chunks, which can be shared and requested independently to improve distribution efficiency.
-		Each peer maintains a list of known peers, regularly updating and exchanging this list to discover new nodes and available files.
-		Communication occurs over TCP, with logic in place to handle simultaneous requests, connections, and transfers.
+A decentralized file-sharing system built in Java, inspired by BitTorrent. This application allows peers to share and download files directly from each other without relying on centralized servers or trackers. It supports dynamic peer discovery, chunked file distribution, and seamless NAT traversal for a fully decentralized experience.
 
-**🚀 Key Features**
-	Decentralized File Distribution
-		Files are broken into pieces and downloaded from multiple peers in parallel, maximizing speed and availability.
-	Smart Peer Relay Discovery
-		Peers not only connect directly, but also learn about other peers indirectly. For example, if:
-		Peer A is connected to Peer C
-		Peer B connects to Peer A
-		Then Peer B becomes aware of Peer C and can access shared files from C
-		This effectively creates a recursive peer propagation network, expanding file availability dynamically.
-	NAT Traversal with UPnP
-		Uses Universal Plug and Play (UPnP) to automatically open ports on routers, allowing peers behind NATs to accept incoming connections without manual configuration.
-	Dynamic Peer List Management
-		Peers exchange their known-peer lists upon connecting, keeping the network connected even as nodes come and go.
-	Built in Java
-		Ensures platform independence and easy integration with existing Java tools or systems.
+---
+
+## 🧠 Architecture Overview
+
+This project follows a modular, peer-to-peer architecture:
+
+- Peers act as both clients and servers, able to upload and download simultaneously.
+- Files are split into chunks and shared in parallel across the network.
+- Each peer maintains a list of known peers and exchanges it with new connections to expand the network.
+- Network communication is handled via TCP sockets, with threading to support concurrent uploads/downloads.
+
+---
+
+## 🚀 Key Features
+
+- **Decentralized File Distribution**  
+  Efficient chunk-based file sharing allows pieces to be downloaded from multiple peers at once, reducing overall download times.
+
+- **Recursive Peer Discovery**  
+  Peers automatically discover additional peers through existing connections.  
+  Example:  
+  - Peer A is connected to Peer C  
+  - Peer B connects to Peer A  
+  - Peer B learns about Peer C and accesses C's shared files  
+  This forms a **recursive peer propagation** mechanism that ensures distributed file availability across the network.
+
+- **NAT Traversal with UPnP**  
+  Automatically opens required ports on routers using **Universal Plug and Play (UPnP)**. This allows peers behind NAT to accept incoming connections without manual configuration.
+
+- **Peer List Propagation**  
+  Every peer shares its list of known peers when connecting, ensuring the network adapts to changes and remains connected.
+
+- **Cross-Platform Java Implementation**  
+  Written entirely in Java for portability, ease of debugging, and future extensibility.
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- Java 11 or higher
+- An IDE like IntelliJ or Eclipse (recommended for running and debugging)
+
+### Clone and Run
+
+```bash
+git clone https://github.com/TiagoLealPalma/Peer-2-Peer-Torrent-App.git
+cd Peer-2-Peer-Torrent-App
